@@ -1,6 +1,8 @@
 import type { Config } from "tailwindcss";
 import { fontFamily } from "tailwindcss/defaultTheme";
 
+const colors = require("tailwindcss/colors");
+
 const config = {
   darkMode: ["class"],
   content: [
@@ -38,6 +40,7 @@ const config = {
       },
     },
     colors: {
+      ...colors,
       background: "#2D3250",
       backgroundAlt: "#1E2139",
       primary: "#424769",

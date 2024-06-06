@@ -2,37 +2,53 @@ import React from "react";
 import { Card, CardContent, CardHeader } from "@/components/UI/card";
 import Typography from "./UI/typography";
 import Link from "next/link";
+import { Github, LinkedinIcon, Mail } from "lucide-react";
 
 const Header = () => (
-  <div className="text-center text-text">
-    <Typography variant="h1" className="text-4xl font-bold">
-      Jack Rowe
-    </Typography>
-    <div className="flex w-full bg-black gap-2 flex-wrap justify-center mt-6">
-      <Typography variant="p">(226) 688-5920</Typography>
+  <div className="w-full h-fit text-text flex flex-col md:flex-row items-center gap-8">
+    <div className="pl-0 md:pl-0 w-1/3 min-w-fit">
+      <Typography variant="h1">Jack Rowe</Typography>
+    </div>
+    <div className="w-2/3 flex gap-2 flex-wrap justify-end flex-col items-center md:items-end md:flex-row mb-4 md:mb-0 ">
+      <Typography variant="p">(226)-688-5920</Typography>
 
-      <Typography variant="p">|</Typography>
-      <Link
-        href="mailto:rowejackj@gmail.com"
-        className="text-accent hover:underline"
-      >
-        rowejackj@gmail.com
+      <Typography variant="p" className="hidden md:block">
+        |
+      </Typography>
+
+      <Link href="mailto:rowejackj@gmail.com" className="flex gap-2">
+        <Typography variant="p" className="hover:underline">
+          Email
+        </Typography>
+        <Mail />
       </Link>
-      <Typography variant="p">|</Typography>
+
+      <Typography variant="p" className="hidden md:block">
+        |
+      </Typography>
       <Link
         href="https://linkedin.com/in/jackjrowe"
-        className="text-accent hover:underline"
         target="_blank"
+        className="flex gap-2"
       >
-        LinkedIn
+        <Typography variant="p" className="hover:underline">
+          LinkedIn
+        </Typography>
+        <LinkedinIcon />
       </Link>
-      <Typography variant="p">|</Typography>
+
+      <Typography variant="p" className="hidden md:block">
+        |
+      </Typography>
       <Link
         href="https://github.com/jack-rowe"
-        className="text-accent hover:underline"
+        className="flex gap-2"
         target="_blank"
       >
-        GitHub
+        <Typography variant="p" className=" hover:underline">
+          GitHub
+        </Typography>
+        <Github />
       </Link>
     </div>
   </div>
@@ -55,7 +71,7 @@ type SectionProps = {
 };
 
 const Section = ({ title, children }: SectionProps) => (
-  <section className="mt-8">
+  <section className="mt-0 md:mt-4">
     <h2 className="text-xl font-semibold border-b border-secondary pb-1 text-text">
       {title}
     </h2>
@@ -88,7 +104,7 @@ const Experience = () => (
     </InfoItem>
     <List>
       <ListItem>
-        Led the development of a calendar-integrated meetings system using
+        Led the development of a calendar-integrated meetings system using{" "}
         <strong>Supabase Realtime</strong> and <strong>Next.js REST</strong>,
         enhancing data transfer efficiency and user experience.
       </ListItem>
@@ -211,7 +227,7 @@ const TechnicalSkills = () => (
 
 const Resume = () => {
   return (
-    <Card className="w-full max-w-4xl p-0 md:p-4 bg-backgroundAlt">
+    <Card className="w-full overflow-y-auto max-w-4xl md:p-4 backdrop-blur-md bg-white/10">
       <CardHeader className="pb-0">
         <Header />
       </CardHeader>
