@@ -42,11 +42,11 @@ type ListItemProps = {
 };
 
 const List = ({ children }: ListItemProps) => (
-  <ul className="list-disc list-inside mt-2">{children}</ul>
+  <ul className="list-disc mt-2">{children}</ul>
 );
 
 const ListItem = ({ children }: ListItemProps) => (
-  <li className="mb-2 ml-4 text-text">{children}</li>
+  <li className="mb-2 ml-8 text-text">{children}</li>
 );
 
 type SectionProps = {
@@ -70,7 +70,7 @@ type InfoItemProps = {
 };
 
 const InfoItem = ({ left, right, children }: InfoItemProps) => (
-  <div className="mt-4">
+  <div className="mt-4 ml-4">
     <div className="flex justify-between">
       <div>
         <h3 className="font-bold text-text">{left}</h3>
