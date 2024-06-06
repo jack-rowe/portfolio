@@ -211,7 +211,7 @@ const TechnicalSkills = () => (
 
 const Resume = () => {
   return (
-    <Card className="max-w-4xl mx-auto p-4 bg-backgroundAlt">
+    <Card className="w-full max-w-4xl p-0 md:p-4 bg-backgroundAlt">
       <CardHeader className="pb-0">
         <Header />
       </CardHeader>
