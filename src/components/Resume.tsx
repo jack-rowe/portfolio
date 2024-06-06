@@ -166,9 +166,10 @@ const Projects = () => (
     <InfoItem
       left="Golf Simulator (WIP)"
       right={
-        <a href="sa" className="text-accent hover:underline">
-          GitHub
-        </a>
+        null
+        // <a href="sa" className="text-accent hover:underline">
+        //   GitHub
+        // </a>
       }
     >
       Python, OpenCV, React, Supabase
@@ -187,7 +188,11 @@ const Projects = () => (
     <InfoItem
       left="Portfolio Website"
       right={
-        <a href="sa" className="text-accent hover:underline">
+        <a
+          href="https://github.com/jack-rowe/portfolio"
+          target="_blank"
+          className="text-accent hover:underline"
+        >
           GitHub
         </a>
       }
