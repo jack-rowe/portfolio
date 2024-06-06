@@ -227,7 +227,7 @@ const TechnicalSkills = () => (
 
 const Resume = () => {
   return (
-    <Card className="w-full overflow-y-auto max-w-4xl md:p-4 backdrop-blur-md bg-white/10">
+    <Card className="w-full overflow-y-auto max-w-4xl md:p-4  bg-backgroundAlt">
       <CardHeader className="pb-0">
         <Header />
       </CardHeader>

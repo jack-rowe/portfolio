@@ -13,12 +13,12 @@ export default function Home() {
         </p>
         <div className="mt-8 flex justify-center gap-4">
           <Link href="/projects">
-            <Button className="px-6 py-3 hover:bg-white hover:text-primary font-semibold rounded-md bg-secondary text-text transition duration-300">
+            <Button className="px-6 py-3 hover:bg-secondary font-semibold rounded-md bg-backgroundAlt text-text transition duration-300">
               View My Projects
             </Button>
           </Link>
           <Link href="/contact">
-            <Button className="px-6 py-3 hover:bg-white hover:text-primary font-semibold rounded-md bg-secondary text-text transition duration-300">
+            <Button className="px-6 py-3 hover:bg-secondary font-semibold rounded-md bg-backgroundAlt text-text transition duration-300">
               Get in Touch
             </Button>
           </Link>
