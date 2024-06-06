@@ -2,8 +2,5 @@
   command = "next build"
   publish = "out"
 
-[[plugins]]
-
-
 [build.environment]
   NETLIFY_NEXT_PLUGIN_SKIP = "true"
