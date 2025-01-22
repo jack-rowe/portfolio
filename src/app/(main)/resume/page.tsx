@@ -3,7 +3,11 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, Download } from "lucide-react";
+import dynamic from "next/dynamic";
 
+const Particles = dynamic(() => import("@/components/Particles"), {
+  ssr: false,
+});
 export default function ResumePage() {
   const experiences = [
     {
@@ -76,28 +80,7 @@ export default function ResumePage() {
   return (
     <section className="min-h-screen relative overflow-hidden py-12">
       {/* Animated background particles */}
-      <div className="absolute inset-0 z-0">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute bg-white/15 rounded-full"
-            style={{
-              width: Math.random() * 30 + 1000,
-              height: Math.random() * 30 + 10,
-              top: Math.random() * 100 + "%",
-              left: Math.random() * 100 + "%",
-            }}
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 0.1 }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              repeatType: "reverse",
-              delay: i * 0.2,
-            }}
-          />
-        ))}
-      </div>
+      <Particles />
 
       <div className="container mx-auto px-4 relative z-10">
         <motion.div

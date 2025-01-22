@@ -2,8 +2,12 @@
 
 import { motion } from "framer-motion";
 import { ArrowRight, ArrowUpRight, Github } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 
+const Particles = dynamic(() => import("@/components/Particles"), {
+  ssr: false,
+});
 export default function ProjectsPage() {
   const projects = [
     {
@@ -39,28 +43,7 @@ export default function ProjectsPage() {
   return (
     <section className="min-h-screen relative overflow-hidden py-20">
       {/* Animated background particles - Same as hero page */}
-      <div className="absolute inset-0 z-0">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute bg-white/15 rounded-full"
-            style={{
-              width: Math.random() * 30 + 1000,
-              height: Math.random() * 30 + 10,
-              top: Math.random() * 100 + "%",
-              left: Math.random() * 100 + "%",
-            }}
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 0.1 }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              repeatType: "reverse",
-              delay: i * 0.2,
-            }}
-          />
-        ))}
-      </div>
+      <Particles />
 
       <div className="container mx-auto px-4 relative z-10">
         <motion.div
