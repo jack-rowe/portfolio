@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 
 export default function SplashScreen({ isLoading }: { isLoading: boolean }) {
   const svgPath =
@@ -77,6 +77,7 @@ export default function SplashScreen({ isLoading }: { isLoading: boolean }) {
               </linearGradient>
             </defs>
           </motion.svg>
+
           {/* Main Text */}
           <motion.div
             className="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent relative"

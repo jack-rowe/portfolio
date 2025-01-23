@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion, useSpring } from "framer-motion";
+import { AnimatePresence, motion, useSpring } from "motion/react";
 import {
   ArrowDown,
   ArrowRight,
@@ -124,7 +124,7 @@ export default function PortfolioPage() {
         "Spearheaded calendar integration using TypeScript, React, and Next.js",
         "Optimized API calls with React Query",
         "Created centralized component library from Figma designs (50+ components)",
-        "Implemented landing page with framer-motion animations",
+        "Implemented landing page with motion/react animations",
       ],
     },
   ];
@@ -295,7 +295,7 @@ export default function PortfolioPage() {
             >
               <motion.div
                 ref={cardRef}
-                className="relative h-96 w-96 mx-auto bg-white/5 backdrop-blur-lg rounded-3xl border-2 border-white/10 flex items-center justify-center hover:border-emerald-400/20 transition-all"
+                className="relative h-[30rem] w-[30rem] mx-auto bg-white/5 backdrop-blur-lg rounded-3xl border-2 border-white/10 flex items-center justify-center hover:border-emerald-400/20 transition-all"
                 style={{
                   rotateX,
                   rotateY,
@@ -303,13 +303,45 @@ export default function PortfolioPage() {
                   boxShadow: "0 25px 50px -12px rgba(16, 185, 129, 0.1)",
                 }}
               >
-                <Image
-                  src="/JackHeadshot2.jpg"
-                  alt="Avatar"
-                  width={192}
-                  height={192}
-                  className="h-64 w-64 object-cover rounded-full"
-                />
+                {/* Inner glow effect */}
+                <div className="absolute inset-0 rounded-3xl pointer-events-none border-[1px] border-white/5 bg-gradient-to-b from-transparent via-emerald-400/5 to-transparent" />
+
+                <motion.div
+                  className="h-[20rem] w-[20rem] bg-white/5 rounded-full  border-white/10 flex items-center justify-center overflow-hidden relative"
+                  style={{
+                    transformStyle: "preserve-3d",
+                  }}
+                >
+                  {/* Image container with matching theme */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/10 to-cyan-400/10 opacity-20" />
+                  <div className="absolute inset-0 backdrop-blur-sm" />
+
+                  <div className="relative h-full w-full crt-effect">
+                    <Image
+                      src="/JackHeadshot2.jpg"
+                      alt="Avatar"
+                      width={192}
+                      height={192}
+                      className="h-full w-full object-cover relative z-10 rounded-lg"
+                      style={{
+                        filter: "grayscale(20%) contrast(110%)",
+                        transform: "scaleX(-1)",
+                      }}
+                    />
+
+                    {/* CRT Effects */}
+                    <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
+                      {/* Scanlines */}
+                      <div
+                        className="absolute inset-0 bg-[repeating-linear-gradient(transparent_0px,transparent_1px,rgba(52,211,153,0.5)_2px,rgba(34,211,238,0.5)_3px)] opacity-50"
+                        style={{
+                          backgroundSize: "100% 4px",
+                          animation: "scanline 16s linear infinite",
+                        }}
+                      />
+                    </div>
+                  </div>
+                </motion.div>
               </motion.div>
             </motion.div>
           </motion.div>
@@ -323,7 +355,10 @@ export default function PortfolioPage() {
           className="fixed bottom-8 left-0 right-0 text-center z-[999]"
         >
           <div className="inline-block animate-bounce">
-            <ArrowDown className="text-gray-400" size={24} />
+            <div className="flex flex-col items-center justify-center gap-2 text-white/50 text-xs"> 
+              <span>SCROLL DOWN</span>
+              <ArrowDown className="text-gray-400" size={24} />
+            </div>
           </div>
         </motion.div>
       )}
