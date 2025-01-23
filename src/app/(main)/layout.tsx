@@ -3,6 +3,7 @@
 import { motion } from "motion/react";
 import dynamic from "next/dynamic";
 import { ReactNode, useEffect, useState } from "react";
+import { Analytics } from "@vercel/analytics/react";
 
 const SplashScreen = dynamic(() => import("@/components/SplashScreen"), {
   ssr: false,
@@ -21,6 +22,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
 
   return (
     <>
+      <Analytics />
       <SplashScreen isLoading={isLoading} />
       {!isLoading && (
         <motion.main
