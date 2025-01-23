@@ -28,7 +28,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-gray-950 md:px-20"
+          className="bg-gray-950"
         >
           {children}
         </motion.main>

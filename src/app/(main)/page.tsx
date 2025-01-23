@@ -201,7 +201,10 @@ export default function PortfolioPage() {
       <Particles />
 
       {/* Hero Section */}
-      <section id="home" className="min-h-screen relative flex items-center ">
+      <section
+        id="home"
+        className="min-h-screen relative flex items-center md:px-20"
+      >
         <div className="container mx-auto px-4 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -355,7 +358,7 @@ export default function PortfolioPage() {
           className="fixed bottom-8 left-0 right-0 text-center z-[999]"
         >
           <div className="inline-block animate-bounce">
-            <div className="flex flex-col items-center justify-center gap-2 text-white/50 text-xs"> 
+            <div className="flex flex-col items-center justify-center gap-2 text-white/50 text-xs">
               <span>SCROLL DOWN</span>
               <ArrowDown className="text-gray-400" size={24} />
             </div>
@@ -364,7 +367,7 @@ export default function PortfolioPage() {
       )}
 
       {/* Resume Section */}
-      <section id="resume" className="min-h-screen py-20 relative">
+      <section id="resume" className="min-h-screen py-20 relative md:px-20">
         <div className="container mx-auto px-4 relative z-10">
           <div className="w-full flex items-center justify-between flex-col gap-4 mb-4 sm:mb-12 sm:flex-row">
             <h2 className="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
@@ -490,7 +493,7 @@ export default function PortfolioPage() {
       </section>
 
       {/* Projects Section */}
-      <section id="projects" className="min-h-screen py-20 relative">
+      <section id="projects" className="min-h-screen py-20 relative md:px-20">
         <div className="container mx-auto px-4 relative z-10">
           <div className="w-full flex items-center justify-between flex-col gap-4 mb-4 sm:mb-12 sm:flex-row">
             <h2 className="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
@@ -588,7 +591,7 @@ export default function PortfolioPage() {
       </div>
 
       {/* Desktop */}
-      <div className="fixed right-4 top-1/2 -translate-y-1/2 z-50 md:flex flex-col gap-4 hidden">
+      <div className="fixed right-4 top-1/2 -translate-y-1/2 z-50 md:flex flex-col gap-4 hidden ">
         {["home", "resume", "projects"].map((section) => (
           <a
             key={section}
