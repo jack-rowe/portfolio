@@ -9,3 +9,11 @@ export interface Project {
   tech: string;
   description?: string;
 }
+
+export interface Todo {
+  id: string;
+  title: string;
+  completed: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
