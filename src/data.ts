@@ -1,6 +1,7 @@
 import { Github, Linkedin, Mail } from "lucide-react";
+import { TEducation, TExperience, TProject, TSocialLink } from "./types";
 
-export const SOCIAL_LINKS = [
+export const SOCIAL_LINKS: TSocialLink[] = [
   { icon: Github, link: "https://github.com/jack-rowe", label: "GitHub" },
   {
     icon: Linkedin,
@@ -10,7 +11,7 @@ export const SOCIAL_LINKS = [
   { icon: Mail, link: "mailto:rowejackj@gmail.com", label: "Email" },
 ];
 
-export const PROJECTS = [
+export const PROJECTS: TProject[] = [
   // {
   //   title: "Backroads Tours",
   //   description:
@@ -24,8 +25,6 @@ export const PROJECTS = [
     description:
       "An esp32 based e-ink dashboard that displays weather, calendar events, and more.",
     tech: ["C++", "ESP-32"],
-    link: "#",
-    github: "#",
   },
   {
     title: "Portfolio",
@@ -39,20 +38,17 @@ export const PROJECTS = [
       "REST API",
       "Framer Motion",
     ],
-    link: "#",
-    github: "#",
   },
   {
     title: "WikiGuessr",
     description:
       "A daily game inspired by Framed.wtf. WikiGuessr challenges players to guess the correct wikipedia page based on a set of gradually more revelaing hints about the article.",
     tech: ["Next.js", "React", "TypeScript", "Tailwind CSS", "Supabase"],
-    link: "#",
-    github: "#",
+    github: "https://github.com/h-sakhizada/WikiGuessr",
   },
 ];
 
-export const EXPERIENCES = [
+export const EXPERIENCES: TExperience[] = [
   {
     company: "Doctalk Inc.",
     role: "Fullstack Software Developer",
@@ -68,7 +64,7 @@ export const EXPERIENCES = [
   },
 ];
 
-export const EDUCATION = [
+export const EDUCATION: TEducation[] = [
   {
     institution: "Fanshawe College",
     degree: "Advanced Diploma in Computer Programming & Analysis",

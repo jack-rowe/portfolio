@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 export const Navigation = () => {
   const [activeSection, setActiveSection] = useState("home");
 
+  const SECTIONS = ["home", "resume", "projects"];
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -28,7 +30,7 @@ export const Navigation = () => {
   return (
     <>
       <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex md:hidden gap-4 backdrop-blur-lg bg-white/10 p-1 rounded-full border border-white/10">
-        {["home", "resume", "projects"].map((section) => (
+        {SECTIONS.map((section) => (
           <a
             key={section}
             href={`#${section}`}
@@ -55,7 +57,7 @@ export const Navigation = () => {
       </div>
 
       <div className="fixed right-4 top-1/2 -translate-y-1/2 z-50 md:flex flex-col gap-4 hidden ">
-        {["home", "resume", "projects"].map((section) => (
+        {SECTIONS.map((section) => (
           <a
             key={section}
             href={`#${section}`}

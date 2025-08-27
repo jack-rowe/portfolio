@@ -1,7 +1,8 @@
 import { EDUCATION, EXPERIENCES, SKILLS } from "@/data";
-import { Download } from "lucide-react";
+import { Download, Github, Linkedin, Mail, Phone } from "lucide-react";
 import { motion } from "motion/react";
 import { Section } from "./Section";
+import { AntiScrapingWrapper } from "@/components/AntiScrapingWrapper";
 
 export const Resume = () => {
   return (
@@ -31,21 +32,45 @@ export const Resume = () => {
         <div className="mb-12 text-center">
           <h2 className="text-3xl font-bold text-gray-100 mb-4">Jack Rowe</h2>
 
-          <div className="flex flex-wrap justify-center gap-4 text-gray-400">
-            <a href="tel:2266885920">(226) 688-5920</a>
-            <a href="mailto:rowejackj@gmail.com">rowejackj@gmail.com</a>
+          <div className="flex flex-col md:flex-row  justify-center items-center gap-4 text-gray-400 h-fit whitespace-nowrap">
+            <AntiScrapingWrapper
+              placeholder="View phone number"
+              className="flex-shrink-0"
+            >
+              <a
+                href="tel:2266885920"
+                className="hover:text-emerald-400 transition-colors flex items-center gap-2"
+              >
+                <Phone size={18} />
+                (226) 688-5920
+              </a>
+            </AntiScrapingWrapper>
+            <AntiScrapingWrapper
+              placeholder="View email"
+              className="flex-shrink-0"
+            >
+              <a
+                href="mailto:rowejackj@gmail.com"
+                className="hover:text-emerald-400 transition-colors flex items-center gap-2"
+              >
+                <Mail size={18} />
+                rowejackj@gmail.com
+              </a>
+            </AntiScrapingWrapper>
             <a
               href="https://linkedin.com/in/jackjrowe"
               target="_blank"
-              className="hover:text-emerald-400 transition-colors"
+              className="hover:text-emerald-400 transition-colors flex items-center gap-2"
             >
+              <Linkedin size={18} />
               linkedin.com/in/jackjrowe
             </a>
             <a
               href="https://github.com/jack-rowe"
               target="_blank"
-              className="hover:text-emerald-400 transition-colors"
+              className="hover:text-emerald-400 transition-colors flex items-center gap-2"
             >
+              <Github size={18} />
               github.com/jack-rowe
             </a>
           </div>

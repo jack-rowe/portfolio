@@ -13,10 +13,15 @@ const SplashScreen = dynamic(() => import("@/components/SplashScreen"), {
 export default function MainLayout({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
+  const isDev = process.env.NEXT_PUBLIC_ENV === "development";
+
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2000); // Adjust timing as needed
+    const timer = setTimeout(
+      () => {
+        setIsLoading(false);
+      },
+      isDev ? 0 : 2000
+    ); // Adjust timing as needed
 
     return () => clearTimeout(timer);
   }, []);
