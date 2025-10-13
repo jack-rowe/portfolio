@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 export const Navigation = () => {
   const [activeSection, setActiveSection] = useState("home");
 
-  const SECTIONS = ["home", "resume", "projects"];
+  const SECTIONS = ["home", "resume"];
 
   useEffect(() => {
     const observer = new IntersectionObserver(

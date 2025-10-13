@@ -18,7 +18,7 @@ export default function PortfolioPage() {
       <Hero />
       <ScrollDownIndicator />
       <Resume />
-      <Projects />
+      {/* <Projects /> */}
       <Navigation />
     </div>
   );

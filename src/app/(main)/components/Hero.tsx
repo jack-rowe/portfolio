@@ -166,6 +166,9 @@ export const Hero = () => {
                   transform: "rotateY(180deg)",
                 }}
               >
+                {/* Solid background to prevent see-through */}
+                <div className="absolute inset-0 bg-slate-900 rounded-3xl" />
+                
                 <MotionCard className="h-full w-full flex items-center justify-center p-6 bg-slate-900/95">
                   <div className="relative w-full h-full flex flex-col items-center justify-center">
                     {/* Close Button */}
