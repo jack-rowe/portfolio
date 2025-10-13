@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     }
 
     const response = await fetch(
-      `https://api-web.nhle.com/v1/club-schedule-season/${abbrev}/20242025`
+      `https://api-web.nhle.com/v1/club-schedule-season/${abbrev}/20252026`
     );
     const data = await response.json();
 
