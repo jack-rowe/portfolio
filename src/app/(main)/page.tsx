@@ -4,8 +4,9 @@ import { Navigation } from "@/app/(main)/components/Navigation";
 import { ScrollDownIndicator } from "@/components/ScrollDownIndicator";
 import dynamic from "next/dynamic";
 import { Hero } from "./components/Hero";
-import { Projects } from "./components/Projects";
+// import { Projects } from "./components/Projects";
 import { Resume } from "./components/Resume";
+import { Stuff } from "./components/Stuff";
 
 const Particles = dynamic(() => import("@/components/Particles"), {
   ssr: false,
@@ -19,6 +20,7 @@ export default function PortfolioPage() {
       <ScrollDownIndicator />
       <Resume />
       {/* <Projects /> */}
+      <Stuff />
       <Navigation />
     </div>
   );
