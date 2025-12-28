@@ -1,3 +1,5 @@
+@import "./clash-display.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,173 +10,54 @@ body {
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 201 95% 14%; /* Based on primary */
-    --card: 0 0% 100%;
-    --card-foreground: 201 95% 14%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 201 95% 14%;
+    /* Base color palette */
+    --carbon-black: 0 0% 12%;
+    --charcoal: 0 0% 18%;
+    --muted-teal: 128 24% 62%;
+    --pine-teal: 136 22% 20%;
+    --soft-linen: 47 19% 89%;
+    --border-gray: 0 0% 25%;
 
-    /* Primary color (#023047) and its variations */
-    --primary: 201 95% 14%;
-    --primary-foreground: 0 0% 98%;
+    /* Semantic colors */
+    --background: var(--carbon-black);
+    --foreground: var(--soft-linen);
+    --card: var(--charcoal);
+    --card-foreground: var(--soft-linen);
+    --popover: var(--charcoal);
+    --popover-foreground: var(--soft-linen);
 
-    /* Secondary color - muted beige */
-    --secondary: 45 25% 95%;
-    --secondary-foreground: 201 95% 14%;
+    --primary: var(--muted-teal);
+    --primary-foreground: var(--carbon-black);
 
-    --muted: 201 20% 96%;
-    --muted-foreground: 201 40% 45%;
-    --accent: 45 25% 95%;
-    --accent-foreground: 201 95% 14%;
+    --secondary: var(--pine-teal);
+    --secondary-foreground: var(--soft-linen);
+
+    --muted: var(--charcoal);
+    --muted-foreground: var(--muted-teal);
+    --accent: var(--pine-teal);
+    --accent-foreground: var(--soft-linen);
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 201 20% 90%;
-    --input: 201 20% 90%;
-    --ring: 201 95% 14%;
+    --destructive-foreground: var(--soft-linen);
+    --border: var(--border-gray);
+    --input: var(--charcoal);
+    --ring: var(--muted-teal);
 
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --chart-1: var(--muted-teal);
+    --chart-2: var(--pine-teal);
+    --chart-3: var(--soft-linen);
+    --chart-4: 128 24% 45%;
+    --chart-5: 136 22% 35%;
     --radius: 0.5rem;
 
-    /* Sidebar colors adjusted to match new palette */
-    --sidebar-background: 201 20% 98%;
-    --sidebar-foreground: 201 40% 26%;
-    --sidebar-primary: 201 95% 14%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 201 20% 96%;
-    --sidebar-accent-foreground: 201 95% 14%;
-    --sidebar-border: 201 20% 91%;
-    --sidebar-ring: 201 91% 60%;
-  }
-
-  .dark {
-    --background: 201 95% 14%;
-    --foreground: 0 0% 98%;
-    --card: 201 95% 14%;
-    --card-foreground: 0 0% 98%;
-    --popover: 201 95% 14%;
-    --popover-foreground: 0 0% 98%;
-
-    /* Dark mode primary (#023047) variations */
-    --primary: 0 0% 98%;
-    --primary-foreground: 201 95% 14%;
-
-    /* Dark mode secondary - muted beige variations */
-    --secondary: 45 15% 20%;
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 201 50% 25%;
-    --muted-foreground: 201 20% 64%;
-    --accent: 45 15% 20%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 201 50% 25%;
-    --input: 201 50% 25%;
-    --ring: 0 0% 83%;
-
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-
-    /* Dark mode sidebar colors */
-    --sidebar-background: 201 95% 14%;
-    --sidebar-foreground: 201 20% 96%;
-    --sidebar-primary: 201 76% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 201 50% 16%;
-    --sidebar-accent-foreground: 201 20% 96%;
-    --sidebar-border: 201 50% 16%;
-    --sidebar-ring: 201 91% 60%;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-}
-
-@keyframes scanline {
-  0% {
-    background-position: 0 0;
-  }
-  100% {
-    background-position: 0 100%;
-  }
-}
-
-.crt-effect::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(52, 211, 153, 0.1) 0%,
-    rgba(34, 211, 238, 0.1) 100%
-  );
-  z-index: 15;
-  mix-blend-mode: multiply;
-  pointer-events: none;
-}
-
-.crt-effect:hover::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(34, 211, 238, 0.05);
-  animation: flicker 0.15s 5;
-  z-index: 25;
-}
-
-@keyframes flicker {
-  0% {
-    opacity: 0.1;
-  }
-  10% {
-    opacity: 0.8;
-  }
-  20% {
-    opacity: 0.3;
-  }
-  30% {
-    opacity: 0.6;
-  }
-  40% {
-    opacity: 0.2;
-  }
-  50% {
-    opacity: 0.9;
-  }
-  60% {
-    opacity: 0.4;
-  }
-  70% {
-    opacity: 0.7;
-  }
-  80% {
-    opacity: 0.1;
-  }
-  90% {
-    opacity: 0.5;
-  }
-  100% {
-    opacity: 0.3;
+    /* Sidebar colors */
+    --sidebar-background: var(--carbon-black);
+    --sidebar-foreground: var(--soft-linen);
+    --sidebar-primary: var(--muted-teal);
+    --sidebar-primary-foreground: var(--carbon-black);
+    --sidebar-accent: var(--charcoal);
+    --sidebar-accent-foreground: var(--soft-linen);
+    --sidebar-border: var(--border-gray);
+    --sidebar-ring: var(--muted-teal);
   }
 }
 
