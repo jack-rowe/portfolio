@@ -32,10 +32,21 @@ export interface SquareData {
   glow: string | null; // CSS color for piece outline, null = none
   highlight: string | null; // CSS color for square background override, null = none
   isSelected: boolean; // square is the currently selected square
+  label: string | null; // short text shown on the square (behind piece)
+}
+
+export interface PieceInstance {
+  id: string;
+  piece: PieceCode;
+  square: number;
+  file: number;
+  rank: number;
+  glow: string | null;
 }
 
 export interface RenderState {
   squares: SquareData[]; // always length 64, index = square
+  pieces: PieceInstance[]; // stable-id pieces for animation
   turn: Color;
   fen: string;
   castlingRights: CastlingRights;

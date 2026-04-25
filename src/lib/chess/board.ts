@@ -1,11 +1,5 @@
 import BitBoard from "./bitboard";
-import type {
-  Color,
-  PieceCode,
-  CastlingRights,
-  SquareData,
-  RenderState,
-} from "./types";
+import type { Color, PieceCode, CastlingRights } from "./types";
 
 const PIECE_KEYS: readonly PieceCode[] = [
   "P",
@@ -36,10 +30,6 @@ const START: Record<PieceCode, string> = {
   k: "0001000000000000000000000000000000000000000000000000000000000000",
   p: "0000000011111111000000000000000000000000000000000000000000000000",
 };
-
-function colorOf(piece: PieceCode): Color {
-  return piece === piece.toUpperCase() ? "white" : "black";
-}
 
 export class Board {
   private pieces: Record<PieceCode, BitBoard>;
@@ -131,46 +121,8 @@ export class Board {
   }
 
   // ── Render state (plain objects for React) ────────────
-
-  toRenderState(
-    glows?: Map<number, string>,
-    highlights?: Map<number, string>,
-    selectedSquare: number | null = null,
-  ): RenderState {
-    const squares: SquareData[] = new Array(64);
-
-    for (let sq = 0; sq < 64; sq++) {
-      const piece = this.getPieceAt(sq);
-      const file = sq % 8;
-      const rank = Math.floor(sq / 8);
-      squares[sq] = {
-        square: sq,
-        algebraic: Board.toAlgebraic(sq),
-        piece,
-        pieceColor: piece ? colorOf(piece) : null,
-        isLight: (file + rank) % 2 !== 0,
-        file,
-        rank,
-        glow: glows?.get(sq) ?? null,
-        highlight: highlights?.get(sq) ?? null,
-        isSelected: sq === selectedSquare,
-      };
-    }
-
-    return {
-      squares,
-      turn: this.turn,
-      fen: this.toFEN(),
-      castlingRights: { ...this.castlingRights },
-      enPassantSquare:
-        this.enPassantSquare !== null
-          ? Board.toAlgebraic(this.enPassantSquare)
-          : null,
-      halfmoveClock: this.halfmoveClock,
-      fullmoveNumber: this.fullmoveNumber,
-      selectedSquare,
-    };
-  }
+  // Note: Game now composes its own RenderState (with glows/highlights/
+  // labels/piece-ids). Board intentionally no longer builds one.
 
   // ── FEN ───────────────────────────────────────────────
 
