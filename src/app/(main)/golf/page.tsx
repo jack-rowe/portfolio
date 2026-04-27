@@ -8,6 +8,7 @@ import { LcrShell } from "./_components/lcr/LcrShell";
 import { MatchplayShell } from "./_components/matchplay/MatchplayShell";
 import { ScrambleShell } from "./_components/scramble/ScrambleShell";
 import { Setup } from "./_components/Setup";
+import { StablefordShell } from "./_components/stableford/StablefordShell";
 import { StrokeplayShell } from "./_components/strokeplay/StrokeplayShell";
 import { VegasShell } from "./_components/vegas/VegasShell";
 import { WolfShell } from "./_components/wolf/WolfShell";
@@ -16,6 +17,7 @@ import { useHollywood } from "./_hooks/use-hollywood";
 import { useLcr } from "./_hooks/use-lcr";
 import { useMatchplay } from "./_hooks/use-matchplay";
 import { useScramble } from "./_hooks/use-scramble";
+import { useStableford } from "./_hooks/use-stableford";
 import { useStrokeplay } from "./_hooks/use-strokeplay";
 import { useVegas } from "./_hooks/use-vegas";
 import { useWolf } from "./_hooks/use-wolf";
@@ -41,6 +43,7 @@ export default function GauntletPage() {
     const lcr = useLcr();
     const matchplay = useMatchplay();
     const strokeplay = useStrokeplay();
+    const stableford = useStableford();
     const scramble = useScramble();
 
     const [activeMode, setActiveMode] = useState<GameMode | null>(null);
@@ -54,6 +57,7 @@ export default function GauntletPage() {
         lcr.hydrated &&
         matchplay.hydrated &&
         strokeplay.hydrated &&
+        stableford.hydrated &&
         scramble.hydrated;
 
     useEffect(() => {
@@ -67,6 +71,7 @@ export default function GauntletPage() {
             lcr: !!lcr.state,
             matchplay: !!matchplay.state,
             strokeplay: !!strokeplay.state,
+            stableford: !!stableford.state,
             scramble: !!scramble.state,
         };
         if (stored && has[stored]) {
@@ -85,6 +90,7 @@ export default function GauntletPage() {
         lcr.state,
         matchplay.state,
         strokeplay.state,
+        stableford.state,
         scramble.state,
     ]);
 
@@ -130,6 +136,13 @@ export default function GauntletPage() {
                         handicaps: handicap?.handicaps,
                     });
                     break;
+                case "stableford":
+                    if (!handicap?.courseId) return;
+                    stableford.startGame(names, {
+                        handicap,
+                        handicaps: handicap.handicaps,
+                    });
+                    break;
                 case "scramble":
                     scramble.startGame(names, {
                         handicap,
@@ -140,7 +153,7 @@ export default function GauntletPage() {
             }
             setActiveMode(mode);
         },
-        [gauntlet, wolf, vegas, hollywood, lcr, matchplay, strokeplay, scramble],
+        [gauntlet, wolf, vegas, hollywood, lcr, matchplay, strokeplay, stableford, scramble],
     );
 
     const handleResetToSetup = useCallback(() => {
@@ -215,6 +228,15 @@ export default function GauntletPage() {
         return (
             <>
                 <StrokeplayShell onResetToSetup={handleResetToSetup} />
+                <Toaster />
+            </>
+        );
+    }
+
+    if (activeMode === "stableford") {
+        return (
+            <>
+                <StablefordShell onResetToSetup={handleResetToSetup} />
                 <Toaster />
             </>
         );

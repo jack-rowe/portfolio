@@ -30,6 +30,10 @@ import {
     STROKEPLAY_MIN_PLAYERS,
 } from "../_lib/strokeplay/types";
 import {
+    STABLEFORD_MAX_PLAYERS,
+    STABLEFORD_MIN_PLAYERS,
+} from "../_lib/stableford/types";
+import {
     SCRAMBLE_PLAYER_COUNT,
 } from "../_lib/scramble/types";
 import type {
@@ -52,6 +56,9 @@ function playerBounds(mode: GameMode): PlayerBounds {
     }
     if (mode === "strokeplay") {
         return { min: STROKEPLAY_MIN_PLAYERS, max: STROKEPLAY_MAX_PLAYERS, fixed: null };
+    }
+    if (mode === "stableford") {
+        return { min: STABLEFORD_MIN_PLAYERS, max: STABLEFORD_MAX_PLAYERS, fixed: null };
     }
     if (mode === "scramble") {
         return { min: SCRAMBLE_PLAYER_COUNT, max: SCRAMBLE_PLAYER_COUNT, fixed: SCRAMBLE_PLAYER_COUNT };
@@ -135,6 +142,13 @@ const GAME_MODES: GameModeOption[] = [
         label: "Stroke Play",
         description:
             "Lowest net total wins. Per-player handicap subtracts from gross. 1-4 players.",
+        available: true,
+    },
+    {
+        id: "stableford",
+        label: "Stableford",
+        description:
+            "Points per hole based on net score vs par. Course required. 1-4 players.",
         available: true,
     },
     {
@@ -248,7 +262,8 @@ export function Setup({ onStart }: Props) {
         GAME_MODES.find((m) => m.id === mode) ?? GAME_MODES[0];
     const bounds = playerBounds(mode);
     const lockMessage = computeLockMessage(selectedMode.label, bounds);
-    const canStart = selectedMode.available;
+    const needsCourse = mode === "stableford" && courseId === null;
+    const canStart = selectedMode.available && !needsCourse;
 
     const submit = () => {
         if (!canStart) return;
@@ -259,14 +274,23 @@ export function Setup({ onStart }: Props) {
                 const n = Number.parseInt(h, 10);
                 return Number.isFinite(n) && n >= 0 ? n : 0;
             });
-        const handicapCfg =
-            handicapMode === "none"
-                ? undefined
-                : buildHandicapConfig(
-                    handicapMode,
-                    courseId ?? undefined,
-                    hcps,
-                );
+        let handicapCfg: HandicapConfig | undefined;
+        if (mode === "stableford") {
+            // Stableford always needs the course id, even with handicapMode === "none".
+            handicapCfg = {
+                mode: handicapMode,
+                courseId: courseId ?? undefined,
+                handicaps: hcps,
+            };
+        } else if (handicapMode !== "none") {
+            handicapCfg = buildHandicapConfig(
+                handicapMode,
+                courseId ?? undefined,
+                hcps,
+            );
+        } else {
+            handicapCfg = undefined;
+        }
         if (mode === "scramble") {
             const fmt: ScrambleFormat =
                 scrambleLayout === "4v0" ? "strokeplay" : scrambleFormat;
@@ -502,12 +526,12 @@ export function Setup({ onStart }: Props) {
                                         },
                                         ...(mode === "strokeplay"
                                             ? [
-                                                  {
-                                                      id: "gross" as HandicapMode,
-                                                      label: "Gross",
-                                                      desc: "Subtract from total",
-                                                  },
-                                              ]
+                                                {
+                                                    id: "gross" as HandicapMode,
+                                                    label: "Gross",
+                                                    desc: "Subtract from total",
+                                                },
+                                            ]
                                             : []),
                                         {
                                             id: "strokes" as HandicapMode,

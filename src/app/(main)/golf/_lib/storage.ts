@@ -51,6 +51,7 @@ const ModeSchema = z.union([
   z.literal("lcr"),
   z.literal("matchplay"),
   z.literal("strokeplay"),
+  z.literal("stableford"),
   z.literal("scramble"),
 ]);
 

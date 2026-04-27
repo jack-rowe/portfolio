@@ -18,6 +18,7 @@ export type GameMode =
   | "lcr"
   | "matchplay"
   | "strokeplay"
+  | "stableford"
   | "scramble";
 export const DEFAULT_GAME_MODE: GameMode = "gauntlet";
 export const ALL_GAME_MODES: GameMode[] = [
@@ -28,5 +29,6 @@ export const ALL_GAME_MODES: GameMode[] = [
   "lcr",
   "matchplay",
   "strokeplay",
+  "stableford",
   "scramble",
 ];

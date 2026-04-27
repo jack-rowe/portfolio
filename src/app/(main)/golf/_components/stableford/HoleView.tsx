@@ -1,0 +1,93 @@
+"use client";
+
+import { Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import type { CourseInfo } from "../../_lib/courseData";
+import { holePointsFor } from "../../_lib/stableford/engine";
+import type {
+    StablefordHole,
+    StablefordPlayer,
+    StablefordState,
+} from "../../_lib/stableford/types";
+
+type Props = {
+    players: StablefordPlayer[];
+    holeIndex: number;
+    hole: StablefordHole;
+    onEdit: () => void;
+    handicap?: StablefordState["handicap"];
+    course: CourseInfo;
+};
+
+function gridColsFor(n: number): string {
+    if (n <= 1) return "grid-cols-1";
+    if (n === 2) return "grid-cols-2";
+    if (n === 3) return "grid-cols-3";
+    return "grid-cols-4";
+}
+
+export function HoleView({
+    players,
+    holeIndex,
+    hole,
+    onEdit,
+    handicap,
+    course,
+}: Props) {
+    const par = course.holes[holeIndex]?.par;
+    const pointsByPlayer = hole.scores.map((s, i) =>
+        holePointsFor(s, i, holeIndex, handicap, course),
+    );
+    const best = Math.max(...pointsByPlayer);
+
+    return (
+        <div className="rounded-lg border border-border bg-card p-3 space-y-3">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground text-center">
+                Hole {holeIndex + 1}
+                {par !== undefined ? ` · Par ${String(par)}` : ""}
+            </p>
+            <div className={cn("grid gap-2", gridColsFor(players.length))}>
+                {players.map((p, i) => {
+                    const isBest =
+                        players.length > 1 && pointsByPlayer[i] === best;
+                    return (
+                        <div
+                            key={p.id}
+                            className={cn(
+                                "rounded-md border px-2 py-2 text-center",
+                                isBest
+                                    ? "border-primary/40 bg-primary/5"
+                                    : "border-border",
+                            )}
+                        >
+                            <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground truncate">
+                                {p.name}
+                            </p>
+                            <p
+                                className={cn(
+                                    "font-clash text-2xl font-bold tabular-nums leading-tight",
+                                    isBest ? "text-primary" : "text-foreground",
+                                )}
+                            >
+                                {hole.scores[i]}
+                            </p>
+                            <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground tabular-nums">
+                                {pointsByPlayer[i]} pt
+                                {pointsByPlayer[i] === 1 ? "" : "s"}
+                            </p>
+                        </div>
+                    );
+                })}
+            </div>
+            <Button
+                variant="ghost"
+                size="sm"
+                className="w-full gap-1.5 text-muted-foreground hover:text-foreground"
+                onClick={onEdit}
+            >
+                <Pencil aria-hidden="true" className="w-3.5 h-3.5" /> Edit hole
+            </Button>
+        </div>
+    );
+}
