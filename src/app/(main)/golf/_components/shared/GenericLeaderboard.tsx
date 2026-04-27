@@ -17,6 +17,8 @@ type Props = {
     /** Optional unit label after the number (e.g. "pt", "vegas"). */
     unitLabel?: (points: number) => string;
     onRename?: (playerId: string, name: string) => void;
+    /** Per-player handicap to render beneath the name. */
+    handicapFor?: (playerId: string) => number | undefined;
 };
 
 export function GenericLeaderboard({
@@ -25,6 +27,7 @@ export function GenericLeaderboard({
     title,
     unitLabel,
     onRename,
+    handicapFor,
 }: Props) {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editingName, setEditingName] = useState("");
@@ -113,6 +116,11 @@ export function GenericLeaderboard({
                                             </button>
                                         )}
                                 </div>
+                                {handicapFor?.(p.id) !== undefined && (
+                                    <div className="text-xs text-muted-foreground mt-0.5 tabular-nums">
+                                        Hcp {String(handicapFor(p.id))}
+                                    </div>
+                                )}
                             </div>
                             <div className="text-right shrink-0">
                                 <div className="font-clash text-xl font-bold text-foreground leading-none tabular-nums">

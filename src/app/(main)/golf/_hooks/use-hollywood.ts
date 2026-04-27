@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
+import type { HandicapStartOptions } from "../_lib/handicap";
 import { hollywoodEngine } from "../_lib/hollywood/engine";
 import type {
   HollywoodHole,
@@ -11,17 +12,17 @@ import type { UseGame } from "./use-game";
 import { useGame } from "./use-game";
 
 export type UseHollywood = Omit<
-  UseGame<HollywoodState, HollywoodHole, HollywoodPlayer, void>,
+  UseGame<HollywoodState, HollywoodHole, HollywoodPlayer, HandicapStartOptions>,
   "startGame"
 > & {
-  startGame: (names: string[]) => void;
+  startGame: (names: string[], options?: HandicapStartOptions) => void;
 };
 
 export function useHollywood(): UseHollywood {
   const game = useGame(hollywoodEngine);
   const startGame = useCallback(
-    (names: string[]) => {
-      game.startGame(names, undefined as never);
+    (names: string[], options: HandicapStartOptions = {}) => {
+      game.startGame(names, options);
     },
     [game],
   );

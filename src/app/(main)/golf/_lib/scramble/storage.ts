@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { GameStorage } from "../base/storage";
+import { HandicapConfigSchema } from "../handicap";
 import {
   SCRAMBLE_MAX_PLAYERS,
   SCRAMBLE_MIN_PLAYERS,
@@ -30,6 +31,7 @@ const StateSchema = z
     teams: z.array(z.array(z.number().int().nonnegative())).min(1).max(2),
     holes: z.array(HoleSchema).max(SCRAMBLE_TOTAL_HOLES),
     finishedAt: z.number().int().nonnegative().optional(),
+    handicap: HandicapConfigSchema.optional(),
   })
   .superRefine((data, ctx) => {
     const teamCount = data.teams.length;

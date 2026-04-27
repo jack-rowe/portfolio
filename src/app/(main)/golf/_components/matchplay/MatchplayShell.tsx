@@ -174,6 +174,7 @@ export function MatchplayShell({ onResetToSetup }: Props) {
                             onEdit={() => {
                                 setEditingHole(clampedViewedHole);
                             }}
+                            handicap={state.handicap}
                         />
                     </>
                 )}
@@ -190,6 +191,7 @@ export function MatchplayShell({ onResetToSetup }: Props) {
                     holes={state.holes}
                     activeHoleIndex={isLiveEntry ? null : clampedViewedHole}
                     onSelectHole={setViewedHole}
+                    handicap={state.handicap}
                 />
             </div>
 

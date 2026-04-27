@@ -6,6 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { COURSES } from "../_lib/courseData";
+import {
+    MAX_HANDICAP,
+    buildHandicapConfig,
+} from "../_lib/handicap";
+import type { HandicapConfig, HandicapMode } from "../_lib/handicap";
 import { loadLastMode, loadLastNames } from "../_lib/storage";
 import {
     DEFAULT_GAME_MODE,
@@ -20,7 +26,6 @@ import {
     MATCHPLAY_MIN_PLAYERS,
 } from "../_lib/matchplay/types";
 import {
-    STROKEPLAY_MAX_HANDICAP,
     STROKEPLAY_MAX_PLAYERS,
     STROKEPLAY_MIN_PLAYERS,
 } from "../_lib/strokeplay/types";
@@ -66,7 +71,7 @@ function computeLockMessage(
 }
 
 type StartOptions = {
-    handicaps?: number[];
+    handicap?: HandicapConfig;
     scrambleLayout?: ScrambleLayout;
     scrambleFormat?: ScrambleFormat;
 };
@@ -159,7 +164,7 @@ function clampHandicapInput(raw: string): string {
     if (digits === "") return "";
     const n = Number.parseInt(digits, 10);
     if (!Number.isFinite(n) || n < 0) return "0";
-    if (n > STROKEPLAY_MAX_HANDICAP) return String(STROKEPLAY_MAX_HANDICAP);
+    if (n > MAX_HANDICAP) return String(MAX_HANDICAP);
     return String(n);
 }
 
@@ -186,6 +191,8 @@ export function Setup({ onStart }: Props) {
         useState<ScrambleLayout>("2v2");
     const [scrambleFormat, setScrambleFormat] =
         useState<ScrambleFormat>("matchplay");
+    const [courseId, setCourseId] = useState<string | null>(null);
+    const [handicapMode, setHandicapMode] = useState<HandicapMode>("none");
     const [dragIdx, setDragIdx] = useState<number | null>(null);
     const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
     const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
@@ -219,6 +226,13 @@ export function Setup({ onStart }: Props) {
         }
     }, [mode, playerCount]);
 
+    // "strokes" mode requires a course (for stroke index data).
+    useEffect(() => {
+        if (handicapMode === "strokes" && courseId === null) {
+            setHandicapMode("gross");
+        }
+    }, [handicapMode, courseId]);
+
     const visibleNames = names.slice(0, playerCount);
     const duplicates = useMemo(
         () => findDuplicates(visibleNames),
@@ -234,16 +248,20 @@ export function Setup({ onStart }: Props) {
     const submit = () => {
         if (!canStart) return;
         const trimmedNames = names.slice(0, playerCount);
-        if (mode === "strokeplay") {
-            const hcps = handicaps
-                .slice(0, playerCount)
-                .map((h) => {
-                    const n = Number.parseInt(h, 10);
-                    return Number.isFinite(n) && n >= 0 ? n : 0;
-                });
-            onStart(trimmedNames, mode, { handicaps: hcps });
-            return;
-        }
+        const hcps = handicaps
+            .slice(0, playerCount)
+            .map((h) => {
+                const n = Number.parseInt(h, 10);
+                return Number.isFinite(n) && n >= 0 ? n : 0;
+            });
+        const handicapCfg =
+            handicapMode === "none"
+                ? undefined
+                : buildHandicapConfig(
+                    handicapMode,
+                    courseId ?? undefined,
+                    hcps,
+                );
         if (mode === "scramble") {
             const fmt: ScrambleFormat =
                 scrambleLayout === "4v0" ? "strokeplay" : scrambleFormat;
@@ -253,7 +271,7 @@ export function Setup({ onStart }: Props) {
             });
             return;
         }
-        onStart(trimmedNames, mode);
+        onStart(trimmedNames, mode, { handicap: handicapCfg });
     };
 
     const focusRow = (i: number) => {
@@ -394,6 +412,137 @@ export function Setup({ onStart }: Props) {
                     )}
                 </div>
 
+                {mode !== "scramble" && (
+                    <div className="space-y-3">
+                        <div className="space-y-2">
+                            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-medium">
+                                Course
+                            </p>
+                            <div
+                                role="radiogroup"
+                                aria-label="Course"
+                                className="grid grid-cols-2 gap-2"
+                            >
+                                <button
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={courseId === null}
+                                    onClick={() => {
+                                        setCourseId(null);
+                                    }}
+                                    className={cn(
+                                        "text-left rounded-md border px-3 py-2.5 transition-colors",
+                                        courseId === null
+                                            ? "border-primary bg-primary/5"
+                                            : "border-border bg-card hover:border-foreground/40",
+                                    )}
+                                >
+                                    <span className="font-clash text-base font-bold block">
+                                        None
+                                    </span>
+                                    <span className="text-xs text-muted-foreground leading-snug">
+                                        No par or stroke index
+                                    </span>
+                                </button>
+                                {COURSES.map((c) => {
+                                    const selected = courseId === c.id;
+                                    return (
+                                        <button
+                                            key={c.id}
+                                            type="button"
+                                            role="radio"
+                                            aria-checked={selected}
+                                            onClick={() => {
+                                                setCourseId(c.id);
+                                            }}
+                                            className={cn(
+                                                "text-left rounded-md border px-3 py-2.5 transition-colors",
+                                                selected
+                                                    ? "border-primary bg-primary/5"
+                                                    : "border-border bg-card hover:border-foreground/40",
+                                            )}
+                                        >
+                                            <span className="font-clash text-base font-bold block">
+                                                {c.name}
+                                            </span>
+                                            <span className="text-xs text-muted-foreground leading-snug">
+                                                Par {c.holes.reduce((s, h) => s + h.par, 0)}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-medium">
+                                Handicap
+                            </p>
+                            <div
+                                role="radiogroup"
+                                aria-label="Handicap mode"
+                                className="grid grid-cols-3 gap-2"
+                            >
+                                {(
+                                    [
+                                        {
+                                            id: "none" as HandicapMode,
+                                            label: "None",
+                                            desc: "Gross only",
+                                        },
+                                        {
+                                            id: "gross" as HandicapMode,
+                                            label: "Gross",
+                                            desc: "Subtract from total",
+                                        },
+                                        {
+                                            id: "strokes" as HandicapMode,
+                                            label: "Strokes",
+                                            desc: "Per-hole by index",
+                                        },
+                                    ]
+                                ).map((opt) => {
+                                    const disabled =
+                                        opt.id === "strokes" && courseId === null;
+                                    const selected = handicapMode === opt.id;
+                                    return (
+                                        <button
+                                            key={opt.id}
+                                            type="button"
+                                            role="radio"
+                                            aria-checked={selected}
+                                            disabled={disabled}
+                                            onClick={() => {
+                                                if (!disabled) setHandicapMode(opt.id);
+                                            }}
+                                            className={cn(
+                                                "text-left rounded-md border px-3 py-2.5 transition-colors",
+                                                selected
+                                                    ? "border-primary bg-primary/5"
+                                                    : "border-border bg-card hover:border-foreground/40",
+                                                disabled &&
+                                                "opacity-40 cursor-not-allowed hover:border-border",
+                                            )}
+                                        >
+                                            <span className="font-clash text-base font-bold block">
+                                                {opt.label}
+                                            </span>
+                                            <span className="text-xs text-muted-foreground leading-snug">
+                                                {opt.desc}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            {handicapMode === "strokes" && courseId === null && (
+                                <p className="text-xs text-muted-foreground">
+                                    Select a course to use stroke-by-hole handicapping.
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 {mode === "scramble" && (
                     <div className="space-y-3">
                         <div className="space-y-2">
@@ -448,7 +597,7 @@ export function Setup({ onStart }: Props) {
                             </div>
                             {scrambleLayout === "2v2" && (
                                 <p className="text-xs text-muted-foreground">
-                                    Players 1 &amp; 2 form Team A; 3 &amp; 4 form Team B. Drag to rearrange.
+                                    Players 1 &amp; 2 form Team A; 3 &amp; 4 form Team B. Drag or tap arrows to rearrange.
                                 </p>
                             )}
                         </div>
@@ -640,7 +789,7 @@ export function Setup({ onStart }: Props) {
                                         }}
                                     />
                                 </div>
-                                {mode === "strokeplay" && (
+                                {handicapMode !== "none" && (
                                     <div className="w-16 shrink-0">
                                         <Label
                                             htmlFor={`${id}-hcp`}

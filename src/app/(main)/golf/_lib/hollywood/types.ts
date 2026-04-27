@@ -1,3 +1,5 @@
+import type { HandicapConfig } from "../handicap";
+
 export const HOLLYWOOD_PLAYER_COUNT = 4;
 export const HOLLYWOOD_TOTAL_HOLES = 18;
 export const HOLLYWOOD_SEGMENT_HOLES = 6;
@@ -20,6 +22,7 @@ export type HollywoodState = {
   players: HollywoodPlayer[];
   holes: HollywoodHole[];
   finishedAt?: number;
+  handicap?: HandicapConfig;
 };
 
 /** Pair indices for each segment's two teams. */

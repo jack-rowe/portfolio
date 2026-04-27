@@ -1,7 +1,25 @@
 import { GameEngine } from "../base/engine";
+import { getCourse } from "../courseData";
+import type { CourseInfo } from "../courseData";
+import { netScoresForHole } from "../handicap";
+import type { HandicapConfig, HandicapStartOptions } from "../handicap";
 import { wolfStorage } from "./storage";
 import type { WolfDecision, WolfHole, WolfPlayer, WolfState } from "./types";
 import { WOLF_PLAYER_COUNT, WOLF_STORAGE_KEY, WOLF_TOTAL_HOLES } from "./types";
+
+export type WolfScoringContext = {
+  handicap?: HandicapConfig;
+  course: CourseInfo | null;
+};
+
+const NO_CTX: WolfScoringContext = { course: null };
+
+function ctxFromState(state: WolfState): WolfScoringContext {
+  return {
+    handicap: state.handicap,
+    course: getCourse(state.handicap?.courseId),
+  };
+}
 
 // Standard "Pittsburgh Wolf" point scheme. All point values flow upward;
 // no negative points are recorded so leaderboard rendering stays simple.
@@ -62,13 +80,21 @@ export function awardHole(
   hole: WolfHole,
   wolfIndex: number,
   playerCount: number,
+  holeIndex = 0,
+  ctx: WolfScoringContext = NO_CTX,
 ): HoleAward {
   const award: number[] = Array.from({ length: playerCount }, () => 0);
   const { wolfTeam, oppTeam } = teamsFor(hole.decision, wolfIndex, playerCount);
   if (wolfTeam.length === 0 || oppTeam.length === 0) return award;
 
-  const wolfBest = bestScore(hole.scores, wolfTeam);
-  const oppBest = bestScore(hole.scores, oppTeam);
+  const net = netScoresForHole(
+    hole.scores,
+    holeIndex,
+    ctx.handicap,
+    ctx.course,
+  );
+  const wolfBest = bestScore(net, wolfTeam);
+  const oppBest = bestScore(net, oppTeam);
   if (wolfBest === oppBest) return award;
 
   const wolfWon = wolfBest < oppBest;
@@ -100,9 +126,10 @@ export function applyHole(
   players: WolfPlayer[],
   hole: WolfHole,
   holeIndex: number,
+  ctx: WolfScoringContext = NO_CTX,
 ): WolfPlayer[] {
   const wolfIdx = wolfFor(holeIndex, players.length);
-  const award = awardHole(hole, wolfIdx, players.length);
+  const award = awardHole(hole, wolfIdx, players.length, holeIndex, ctx);
   return players.map((p, i) => ({ ...p, points: p.points + award[i] }));
 }
 
@@ -110,9 +137,10 @@ export function applyHole(
 export function recompute(
   initialPlayers: WolfPlayer[],
   holes: WolfHole[],
+  ctx: WolfScoringContext = NO_CTX,
 ): WolfPlayer[] {
   return holes.reduce<WolfPlayer[]>(
-    (players, hole, idx) => applyHole(players, hole, idx),
+    (players, hole, idx) => applyHole(players, hole, idx, ctx),
     initialPlayers,
   );
 }
@@ -152,11 +180,18 @@ export function holeOutcome(
   hole: WolfHole,
   holeIndex: number,
   playerCount: number,
+  ctx: WolfScoringContext = NO_CTX,
 ): WolfHoleOutcome {
   const wolfIdx = wolfFor(holeIndex, playerCount);
   const { wolfTeam, oppTeam } = teamsFor(hole.decision, wolfIdx, playerCount);
-  const wolfBest = bestScore(hole.scores, wolfTeam);
-  const oppBest = bestScore(hole.scores, oppTeam);
+  const net = netScoresForHole(
+    hole.scores,
+    holeIndex,
+    ctx.handicap,
+    ctx.course,
+  );
+  const wolfBest = bestScore(net, wolfTeam);
+  const oppBest = bestScore(net, oppTeam);
   let result: "wolf" | "opp" | "tie" = "tie";
   if (wolfBest < oppBest) result = "wolf";
   else if (oppBest < wolfBest) result = "opp";
@@ -167,7 +202,7 @@ export function holeOutcome(
     wolfBest,
     oppBest,
     result,
-    award: awardHole(hole, wolfIdx, playerCount),
+    award: awardHole(hole, wolfIdx, playerCount, holeIndex, ctx),
   };
 }
 
@@ -209,19 +244,28 @@ function makeId(seed: number): string {
   return `w-${String(seed)}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-class WolfEngineImpl extends GameEngine<WolfState, WolfHole, WolfPlayer> {
+class WolfEngineImpl extends GameEngine<
+  WolfState,
+  WolfHole,
+  WolfPlayer,
+  HandicapStartOptions
+> {
   readonly mode = "wolf" as const;
   readonly storageKey = WOLF_STORAGE_KEY;
   readonly totalHoles = WOLF_TOTAL_HOLES;
   readonly minPlayers = WOLF_PLAYER_COUNT;
   readonly maxPlayers = WOLF_PLAYER_COUNT;
 
-  createInitialState(names: string[]): WolfState | null {
+  createInitialState(
+    names: string[],
+    options: HandicapStartOptions = {},
+  ): WolfState | null {
     if (names.length !== WOLF_PLAYER_COUNT) return null;
     return {
       mode: "wolf",
       players: makeInitialPlayers(this.trimNames(names)),
       holes: [],
+      handicap: options.handicap,
     };
   }
 
@@ -236,7 +280,12 @@ class WolfEngineImpl extends GameEngine<WolfState, WolfHole, WolfPlayer> {
   applyHole(state: WolfState, hole: WolfHole): WolfState {
     return {
       ...state,
-      players: applyHole(state.players, hole, state.holes.length),
+      players: applyHole(
+        state.players,
+        hole,
+        state.holes.length,
+        ctxFromState(state),
+      ),
       holes: [...state.holes, hole],
     };
   }
@@ -244,7 +293,11 @@ class WolfEngineImpl extends GameEngine<WolfState, WolfHole, WolfPlayer> {
   recompute(state: WolfState): WolfState {
     return {
       ...state,
-      players: recompute(resetPlayers(state.players), state.holes),
+      players: recompute(
+        resetPlayers(state.players),
+        state.holes,
+        ctxFromState(state),
+      ),
     };
   }
 

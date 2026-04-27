@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useHollywood } from "../../_hooks/use-hollywood";
+import { getCourse } from "../../_lib/courseData";
 import { segmentScores, SEGMENTS } from "../../_lib/hollywood/engine";
 import type {
     HollywoodHole,
@@ -77,7 +78,10 @@ export function HollywoodShell({ onResetToSetup }: Props) {
     const canNext = clampedViewedHole < maxIndex;
     const navLabel = computeNavLabel(isLiveEntry, isGameOver);
 
-    const segs = segmentScores(state.holes);
+    const segs = segmentScores(state.holes, {
+        handicap: state.handicap,
+        course: getCourse(state.handicap?.courseId),
+    });
 
     const goPrev = () => {
         if (canPrev) setViewedHole(clampedViewedHole - 1);
@@ -186,6 +190,7 @@ export function HollywoodShell({ onResetToSetup }: Props) {
                             onEdit={() => {
                                 setEditingHole(clampedViewedHole);
                             }}
+                            handicap={state.handicap}
                         />
                     </>
                 )}
@@ -202,6 +207,7 @@ export function HollywoodShell({ onResetToSetup }: Props) {
                     holes={state.holes}
                     activeHoleIndex={isLiveEntry ? null : clampedViewedHole}
                     onSelectHole={setViewedHole}
+                    handicap={state.handicap}
                 />
             </div>
 

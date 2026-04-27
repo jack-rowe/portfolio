@@ -172,9 +172,11 @@ export function VegasShell({ onResetToSetup }: Props) {
                             players={state.players}
                             teams={state.teams}
                             hole={state.holes[clampedViewedHole]}
+                            holeIndex={clampedViewedHole}
                             onEdit={() => {
                                 setEditingHole(clampedViewedHole);
                             }}
+                            handicap={state.handicap}
                         />
                     </>
                 )}
@@ -191,6 +193,7 @@ export function VegasShell({ onResetToSetup }: Props) {
                     holes={state.holes}
                     activeHoleIndex={isLiveEntry ? null : clampedViewedHole}
                     onSelectHole={setViewedHole}
+                    handicap={state.handicap}
                 />
             </div>
 

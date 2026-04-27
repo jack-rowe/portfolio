@@ -2,10 +2,12 @@
 
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
+import { getCourse } from "../../_lib/courseData";
 import { holeOutcome, pairsForHole } from "../../_lib/hollywood/engine";
 import type {
     HollywoodHole,
     HollywoodPlayer,
+    HollywoodState,
 } from "../../_lib/hollywood/types";
 
 type Props = {
@@ -13,6 +15,7 @@ type Props = {
     holes: HollywoodHole[];
     activeHoleIndex: number | null;
     onSelectHole: (holeIndex: number) => void;
+    handicap?: HollywoodState["handicap"];
 };
 
 const COL_WIDTH = "w-12";
@@ -23,10 +26,14 @@ export function Scorecard({
     holes,
     activeHoleIndex,
     onSelectHole,
+    handicap,
 }: Props) {
     const outcomes = useMemo(
-        () => holes.map((h, i) => holeOutcome(h, i, players.length)),
-        [holes, players.length],
+        () => {
+            const ctx = { handicap, course: getCourse(handicap?.courseId) };
+            return holes.map((h, i) => holeOutcome(h, i, players.length, ctx));
+        },
+        [holes, players.length, handicap],
     );
 
     if (holes.length === 0) return null;

@@ -1,3 +1,5 @@
+import type { HandicapConfig } from "../handicap";
+
 export const WOLF_PLAYER_COUNT = 4;
 export const WOLF_TOTAL_HOLES = 18;
 export const WOLF_STORAGE_KEY = "wolf:v1";
@@ -29,4 +31,5 @@ export type WolfState = {
   holes: WolfHole[];
   /** Set when the user ends the round early; equals holes.length at end. */
   finishedAt?: number;
+  handicap?: HandicapConfig;
 };

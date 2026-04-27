@@ -1,4 +1,5 @@
 import type { BasePlayer, BaseState } from "../base/types";
+import type { HandicapStartOptions } from "../handicap";
 
 export const STROKEPLAY_MIN_PLAYERS = 1;
 export const STROKEPLAY_MAX_PLAYERS = 4;
@@ -21,6 +22,7 @@ export type StrokeplayState = BaseState<StrokeplayPlayer, StrokeplayHole> & {
   mode: "strokeplay";
 };
 
-export type StrokeplayStartOptions = {
-  handicaps: number[];
+export type StrokeplayStartOptions = HandicapStartOptions & {
+  /** Optional explicit per-player handicap override (legacy). */
+  handicaps?: number[];
 };

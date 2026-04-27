@@ -1,4 +1,5 @@
 import type { GameMode } from "../types";
+import type { HandicapConfig } from "../handicap";
 
 /**
  * Minimum shape every game's player object must satisfy. Subclasses are free
@@ -25,4 +26,6 @@ export type BaseState<
   holes: THole[];
   /** Set when the user ends the round early; equals holes.length at end. */
   finishedAt?: number;
+  /** Optional handicap configuration. Absent => no handicapping. */
+  handicap?: HandicapConfig;
 };

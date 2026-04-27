@@ -3,9 +3,12 @@
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { getCourse } from "../../_lib/courseData";
+import { netScoresForHole } from "../../_lib/handicap";
 import type {
     StrokeplayHole,
     StrokeplayPlayer,
+    StrokeplayState,
 } from "../../_lib/strokeplay/types";
 
 type Props = {
@@ -13,6 +16,7 @@ type Props = {
     holeIndex: number;
     hole: StrokeplayHole;
     onEdit: () => void;
+    handicap?: StrokeplayState["handicap"];
 };
 
 function gridColsFor(n: number): string {
@@ -22,8 +26,14 @@ function gridColsFor(n: number): string {
     return "grid-cols-4";
 }
 
-export function HoleView({ players, holeIndex, hole, onEdit }: Props) {
-    const best = Math.min(...hole.scores);
+export function HoleView({ players, holeIndex, hole, onEdit, handicap }: Props) {
+    const net = netScoresForHole(
+        hole.scores,
+        holeIndex,
+        handicap,
+        getCourse(handicap?.courseId),
+    );
+    const best = Math.min(...net);
 
     return (
         <div className="rounded-lg border border-border bg-card p-3 space-y-3">
@@ -33,7 +43,7 @@ export function HoleView({ players, holeIndex, hole, onEdit }: Props) {
             <div className={cn("grid gap-2", gridColsFor(players.length))}>
                 {players.map((p, i) => {
                     const isBest =
-                        players.length > 1 && hole.scores[i] === best;
+                        players.length > 1 && net[i] === best;
                     return (
                         <div
                             key={p.id}

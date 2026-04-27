@@ -3,18 +3,24 @@
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { getCourse } from "../../_lib/courseData";
 import { holeOutcome } from "../../_lib/vegas/engine";
-import type { VegasHole, VegasPlayer, VegasTeams } from "../../_lib/vegas/types";
+import type { VegasHole, VegasPlayer, VegasState, VegasTeams } from "../../_lib/vegas/types";
 
 type Props = {
     players: VegasPlayer[];
     teams: VegasTeams;
     hole: VegasHole;
+    holeIndex: number;
     onEdit: () => void;
+    handicap?: VegasState["handicap"];
 };
 
-export function HoleView({ players, teams, hole, onEdit }: Props) {
-    const out = holeOutcome(hole, teams, players.length);
+export function HoleView({ players, teams, hole, holeIndex, onEdit, handicap }: Props) {
+    const out = holeOutcome(hole, teams, players.length, holeIndex, {
+        handicap,
+        course: getCourse(handicap?.courseId),
+    });
     const winnerLabel =
         out.winner === "tie" ? "Tied" : `Team ${out.winner} +${out.diff}`;
 

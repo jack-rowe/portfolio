@@ -2,14 +2,16 @@
 
 import { useMemo } from "react";
 import { Trophy } from "lucide-react";
+import { getCourse } from "../../_lib/courseData";
 import { holeOutcomes, resetPlayers } from "../../_lib/gauntlet/engine";
-import type { HoleScores, Player } from "../../_lib/gauntlet/types";
+import type { GauntletState, HoleScores, Player } from "../../_lib/gauntlet/types";
 
 type Props = {
     players: Player[];
     holes: HoleScores[];
     activeHoleIndex: number | null;
     onSelectHole: (holeIndex: number) => void;
+    handicap?: GauntletState["handicap"];
 };
 
 const COL_WIDTH = "w-12";
@@ -20,10 +22,15 @@ export function Scorecard({
     holes,
     activeHoleIndex,
     onSelectHole,
+    handicap,
 }: Props) {
     const outcomes = useMemo(
-        () => holeOutcomes(resetPlayers(players), holes),
-        [players, holes],
+        () =>
+            holeOutcomes(resetPlayers(players), holes, {
+                handicap,
+                course: getCourse(handicap?.courseId),
+            }),
+        [players, holes, handicap],
     );
 
     if (holes.length === 0) return null;

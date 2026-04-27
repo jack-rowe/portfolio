@@ -3,14 +3,16 @@
 import { useMemo } from "react";
 import { Eye, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getCourse } from "../../_lib/courseData";
 import { holeOutcome, wolfFor } from "../../_lib/wolf/engine";
-import type { WolfHole, WolfPlayer } from "../../_lib/wolf/types";
+import type { WolfHole, WolfPlayer, WolfState } from "../../_lib/wolf/types";
 
 type Props = {
     players: WolfPlayer[];
     holes: WolfHole[];
     activeHoleIndex: number | null;
     onSelectHole: (holeIndex: number) => void;
+    handicap?: WolfState["handicap"];
 };
 
 const COL_WIDTH = "w-12";
@@ -21,11 +23,14 @@ export function Scorecard({
     holes,
     activeHoleIndex,
     onSelectHole,
+    handicap,
 }: Props) {
     const outcomes = useMemo(
-        () =>
-            holes.map((h, i) => holeOutcome(h, i, players.length)),
-        [holes, players.length],
+        () => {
+            const ctx = { handicap, course: getCourse(handicap?.courseId) };
+            return holes.map((h, i) => holeOutcome(h, i, players.length, ctx));
+        },
+        [holes, players.length, handicap],
     );
 
     if (holes.length === 0) return null;

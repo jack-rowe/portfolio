@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { GameStorage } from "../base/storage";
+import { HandicapConfigSchema } from "../handicap";
 import { LCR_PLAYER_COUNT, LCR_STORAGE_KEY, LCR_TOTAL_HOLES } from "./types";
 import type { LcrState } from "./types";
 
@@ -24,6 +25,7 @@ const StateSchema = z
     players: z.array(PlayerSchema).length(LCR_PLAYER_COUNT),
     holes: z.array(HoleSchema).max(LCR_TOTAL_HOLES),
     finishedAt: z.number().int().nonnegative().optional(),
+    handicap: HandicapConfigSchema.optional(),
   })
   .superRefine((data, ctx) => {
     if (data.finishedAt !== undefined && data.finishedAt > data.holes.length) {

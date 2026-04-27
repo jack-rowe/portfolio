@@ -1,4 +1,8 @@
 import { GameEngine } from "../base/engine";
+import { getCourse } from "../courseData";
+import type { CourseInfo } from "../courseData";
+import { netScoresForHole } from "../handicap";
+import type { HandicapConfig, HandicapStartOptions } from "../handicap";
 import { lcrStorage } from "./storage";
 import type { LcrHole, LcrPlayer, LcrState } from "./types";
 import {
@@ -8,6 +12,20 @@ import {
   LCR_STORAGE_KEY,
   LCR_TOTAL_HOLES,
 } from "./types";
+
+export type LcrScoringContext = {
+  handicap?: HandicapConfig;
+  course: CourseInfo | null;
+};
+
+const NO_CTX: LcrScoringContext = { course: null };
+
+function ctxFromState(state: LcrState): LcrScoringContext {
+  return {
+    handicap: state.handicap,
+    course: getCourse(state.handicap?.courseId),
+  };
+}
 
 export function outsideIndices(
   centerIndex: number,
@@ -39,11 +57,22 @@ export type LcrHoleOutcome = {
   award: number[];
 };
 
-export function awardHole(hole: LcrHole, playerCount: number): number[] {
+export function awardHole(
+  hole: LcrHole,
+  playerCount: number,
+  holeIndex = 0,
+  ctx: LcrScoringContext = NO_CTX,
+): number[] {
   const award: number[] = Array.from({ length: playerCount }, () => 0);
   const outside = outsideIndices(hole.centerIndex, playerCount);
-  const centerScore = hole.scores[hole.centerIndex];
-  const outsideBest = bestScore(hole.scores, outside);
+  const net = netScoresForHole(
+    hole.scores,
+    holeIndex,
+    ctx.handicap,
+    ctx.course,
+  );
+  const centerScore = net[hole.centerIndex];
+  const outsideBest = bestScore(net, outside);
   if (centerScore === outsideBest) return award;
   if (centerScore < outsideBest) {
     award[hole.centerIndex] = LCR_CENTER_WIN_POINTS;
@@ -56,10 +85,18 @@ export function awardHole(hole: LcrHole, playerCount: number): number[] {
 export function holeOutcome(
   hole: LcrHole,
   playerCount: number,
+  holeIndex = 0,
+  ctx: LcrScoringContext = NO_CTX,
 ): LcrHoleOutcome {
   const outsideTeam = outsideIndices(hole.centerIndex, playerCount);
-  const centerScore = hole.scores[hole.centerIndex];
-  const outsideBest = bestScore(hole.scores, outsideTeam);
+  const net = netScoresForHole(
+    hole.scores,
+    holeIndex,
+    ctx.handicap,
+    ctx.course,
+  );
+  const centerScore = net[hole.centerIndex];
+  const outsideBest = bestScore(net, outsideTeam);
   let winner: "center" | "outside" | "tie" = "tie";
   if (centerScore < outsideBest) winner = "center";
   else if (outsideBest < centerScore) winner = "outside";
@@ -69,17 +106,29 @@ export function holeOutcome(
     centerScore,
     outsideBest,
     winner,
-    award: awardHole(hole, playerCount),
+    award: awardHole(hole, playerCount, holeIndex, ctx),
   };
 }
 
-export function applyHole(players: LcrPlayer[], hole: LcrHole): LcrPlayer[] {
-  const award = awardHole(hole, players.length);
+export function applyHole(
+  players: LcrPlayer[],
+  hole: LcrHole,
+  holeIndex = 0,
+  ctx: LcrScoringContext = NO_CTX,
+): LcrPlayer[] {
+  const award = awardHole(hole, players.length, holeIndex, ctx);
   return players.map((p, i) => ({ ...p, points: p.points + award[i] }));
 }
 
-export function recompute(initial: LcrPlayer[], holes: LcrHole[]): LcrPlayer[] {
-  return holes.reduce<LcrPlayer[]>((acc, h) => applyHole(acc, h), initial);
+export function recompute(
+  initial: LcrPlayer[],
+  holes: LcrHole[],
+  ctx: LcrScoringContext = NO_CTX,
+): LcrPlayer[] {
+  return holes.reduce<LcrPlayer[]>(
+    (acc, h, idx) => applyHole(acc, h, idx, ctx),
+    initial,
+  );
 }
 
 export function resetPlayers(players: LcrPlayer[]): LcrPlayer[] {
@@ -116,19 +165,28 @@ function makeId(i: number): string {
   return `lcr-${String(i)}-${String(Date.now())}-${String(Math.random()).slice(2, 8)}`;
 }
 
-class LcrEngineImpl extends GameEngine<LcrState, LcrHole, LcrPlayer> {
+class LcrEngineImpl extends GameEngine<
+  LcrState,
+  LcrHole,
+  LcrPlayer,
+  HandicapStartOptions
+> {
   readonly mode = "lcr" as const;
   readonly storageKey = LCR_STORAGE_KEY;
   readonly totalHoles = LCR_TOTAL_HOLES;
   readonly minPlayers = LCR_PLAYER_COUNT;
   readonly maxPlayers = LCR_PLAYER_COUNT;
 
-  createInitialState(names: string[]): LcrState | null {
+  createInitialState(
+    names: string[],
+    options: HandicapStartOptions = {},
+  ): LcrState | null {
     if (names.length !== LCR_PLAYER_COUNT) return null;
     return {
       mode: "lcr",
       players: makeInitialPlayers(this.trimNames(names)),
       holes: [],
+      handicap: options.handicap,
     };
   }
 
@@ -148,7 +206,12 @@ class LcrEngineImpl extends GameEngine<LcrState, LcrHole, LcrPlayer> {
   applyHole(state: LcrState, hole: LcrHole): LcrState {
     return {
       ...state,
-      players: applyHole(state.players, hole),
+      players: applyHole(
+        state.players,
+        hole,
+        state.holes.length,
+        ctxFromState(state),
+      ),
       holes: [...state.holes, hole],
     };
   }
@@ -156,7 +219,11 @@ class LcrEngineImpl extends GameEngine<LcrState, LcrHole, LcrPlayer> {
   recompute(state: LcrState): LcrState {
     return {
       ...state,
-      players: recompute(resetPlayers(state.players), state.holes),
+      players: recompute(
+        resetPlayers(state.players),
+        state.holes,
+        ctxFromState(state),
+      ),
     };
   }
 

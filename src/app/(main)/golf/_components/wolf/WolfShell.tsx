@@ -10,6 +10,7 @@ import { HoleNavigator } from "../HoleNavigator";
 import { ResetDialog } from "../ResetDialog";
 import { useWolf } from "../../_hooks/use-wolf";
 import { recompute, resetPlayers } from "../../_lib/wolf/engine";
+import { getCourse } from "../../_lib/courseData";
 import type { WolfHole, WolfState } from "../../_lib/wolf/types";
 import { WOLF_TOTAL_HOLES } from "../../_lib/wolf/types";
 import { EditHoleDialog } from "./EditHoleDialog";
@@ -66,7 +67,11 @@ export function WolfShell({ onResetToSetup }: Props) {
     const playersForView = useMemo(() => {
         if (!state) return [];
         const initial = resetPlayers(state.players);
-        return recompute(initial, state.holes.slice(0, clampedViewedHole));
+        const ctx = {
+            handicap: state.handicap,
+            course: getCourse(state.handicap?.courseId),
+        };
+        return recompute(initial, state.holes.slice(0, clampedViewedHole), ctx);
     }, [state, clampedViewedHole]);
 
     if (!state) return null;
@@ -183,6 +188,7 @@ export function WolfShell({ onResetToSetup }: Props) {
                             onEdit={() => {
                                 setEditingHole(clampedViewedHole);
                             }}
+                            handicap={state.handicap}
                         />
                     </>
                 )}
@@ -198,6 +204,7 @@ export function WolfShell({ onResetToSetup }: Props) {
                     holes={state.holes}
                     activeHoleIndex={isLiveEntry ? null : clampedViewedHole}
                     onSelectHole={setViewedHole}
+                    handicap={state.handicap}
                 />
             </div>
 

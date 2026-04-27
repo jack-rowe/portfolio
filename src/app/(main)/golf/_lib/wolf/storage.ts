@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { GameStorage } from "../base/storage";
+import { HandicapConfigSchema } from "../handicap";
 import { WOLF_PLAYER_COUNT, WOLF_STORAGE_KEY, WOLF_TOTAL_HOLES } from "./types";
 import type { WolfState } from "./types";
 
@@ -39,6 +40,7 @@ const StateSchema = z
     players: z.array(PlayerSchema).length(WOLF_PLAYER_COUNT),
     holes: z.array(HoleSchema).max(WOLF_TOTAL_HOLES),
     finishedAt: z.number().int().nonnegative().optional(),
+    handicap: HandicapConfigSchema.optional(),
   })
   .superRefine((data, ctx) => {
     data.holes.forEach((hole, holeIdx) => {

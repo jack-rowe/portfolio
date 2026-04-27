@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useGauntlet } from "../../_hooks/use-gauntlet";
 import { applyHole, recompute, resetPlayers } from "../../_lib/gauntlet/engine";
+import { getCourse } from "../../_lib/courseData";
+import { netScoresForHole } from "../../_lib/handicap";
 import type { GauntletState, HoleScores } from "../../_lib/gauntlet/types";
 import { GAUNTLET_TOTAL_HOLES as TOTAL_HOLES } from "../../_lib/gauntlet/types";
 import { EditHoleDialog } from "./EditHoleDialog";
@@ -65,7 +67,11 @@ export function GauntletShell({ onResetToSetup }: Props) {
     const playersEntering = useMemo(() => {
         if (!state) return [];
         const initial = resetPlayers(state.players);
-        return recompute(initial, state.holes.slice(0, clampedViewedHole));
+        const ctx = {
+            handicap: state.handicap,
+            course: getCourse(state.handicap?.courseId),
+        };
+        return recompute(initial, state.holes.slice(0, clampedViewedHole), ctx);
     }, [state, clampedViewedHole]);
 
     if (!state) return null;
@@ -97,7 +103,15 @@ export function GauntletShell({ onResetToSetup }: Props) {
 
     const playersAfterViewed = isLiveEntry
         ? playersEntering
-        : applyHole(playersEntering, state.holes[clampedViewedHole]);
+        : applyHole(
+            playersEntering,
+            state.holes[clampedViewedHole],
+            clampedViewedHole,
+            {
+                handicap: state.handicap,
+                course: getCourse(state.handicap?.courseId),
+            },
+        );
 
     const showGameOverBanner =
         isGameOver && clampedViewedHole === state.holes.length - 1;
@@ -176,6 +190,12 @@ export function GauntletShell({ onResetToSetup }: Props) {
                         playersAfter={playersAfterViewed}
                         holeNumber={viewedHoleNumber}
                         scores={state.holes[clampedViewedHole]}
+                        netScores={netScoresForHole(
+                            state.holes[clampedViewedHole],
+                            clampedViewedHole,
+                            state.handicap,
+                            getCourse(state.handicap?.courseId),
+                        )}
                         onEdit={() => {
                             setEditingHole(clampedViewedHole);
                         }}
@@ -199,6 +219,7 @@ export function GauntletShell({ onResetToSetup }: Props) {
                     holes={state.holes}
                     activeHoleIndex={isLiveEntry ? null : clampedViewedHole}
                     onSelectHole={setViewedHole}
+                    handicap={state.handicap}
                 />
             </div>
 

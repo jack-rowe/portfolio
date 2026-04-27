@@ -1,12 +1,36 @@
 import { GameEngine } from "../base/engine";
+import { getCourse } from "../courseData";
+import type { CourseInfo } from "../courseData";
+import { netScoresForHole } from "../handicap";
+import type { HandicapConfig } from "../handicap";
 import { vegasStorage } from "./storage";
-import type { VegasHole, VegasPlayer, VegasState, VegasTeams } from "./types";
+import type {
+  VegasHole,
+  VegasPlayer,
+  VegasStartOptions,
+  VegasState,
+  VegasTeams,
+} from "./types";
 import {
   DEFAULT_VEGAS_TEAMS,
   VEGAS_PLAYER_COUNT,
   VEGAS_STORAGE_KEY,
   VEGAS_TOTAL_HOLES,
 } from "./types";
+
+export type VegasScoringContext = {
+  handicap?: HandicapConfig;
+  course: CourseInfo | null;
+};
+
+const NO_CTX: VegasScoringContext = { course: null };
+
+function ctxFromState(state: VegasState): VegasScoringContext {
+  return {
+    handicap: state.handicap,
+    course: getCourse(state.handicap?.courseId),
+  };
+}
 
 /**
  * Combine two scores into Vegas's two-digit number: low first, high second.
@@ -35,10 +59,18 @@ export function awardHole(
   hole: VegasHole,
   teams: VegasTeams,
   playerCount: number,
+  holeIndex = 0,
+  ctx: VegasScoringContext = NO_CTX,
 ): number[] {
   const award: number[] = Array.from({ length: playerCount }, () => 0);
-  const numA = teamNumber(hole.scores, teams.teamA);
-  const numB = teamNumber(hole.scores, teams.teamB);
+  const net = netScoresForHole(
+    hole.scores,
+    holeIndex,
+    ctx.handicap,
+    ctx.course,
+  );
+  const numA = teamNumber(net, teams.teamA);
+  const numB = teamNumber(net, teams.teamB);
   if (numA === numB) return award;
   const winners = numA < numB ? teams.teamA : teams.teamB;
   const losers = numA < numB ? teams.teamB : teams.teamA;
@@ -52,9 +84,17 @@ export function holeOutcome(
   hole: VegasHole,
   teams: VegasTeams,
   playerCount: number,
+  holeIndex = 0,
+  ctx: VegasScoringContext = NO_CTX,
 ): VegasHoleOutcome {
-  const numberA = teamNumber(hole.scores, teams.teamA);
-  const numberB = teamNumber(hole.scores, teams.teamB);
+  const net = netScoresForHole(
+    hole.scores,
+    holeIndex,
+    ctx.handicap,
+    ctx.course,
+  );
+  const numberA = teamNumber(net, teams.teamA);
+  const numberB = teamNumber(net, teams.teamB);
   let winner: "A" | "B" | "tie" = "tie";
   if (numberA < numberB) winner = "A";
   else if (numberB < numberA) winner = "B";
@@ -63,7 +103,7 @@ export function holeOutcome(
     numberB,
     diff: Math.abs(numberA - numberB),
     winner,
-    award: awardHole(hole, teams, playerCount),
+    award: awardHole(hole, teams, playerCount, holeIndex, ctx),
   };
 }
 
@@ -71,8 +111,10 @@ export function applyHole(
   players: VegasPlayer[],
   hole: VegasHole,
   teams: VegasTeams,
+  holeIndex = 0,
+  ctx: VegasScoringContext = NO_CTX,
 ): VegasPlayer[] {
-  const award = awardHole(hole, teams, players.length);
+  const award = awardHole(hole, teams, players.length, holeIndex, ctx);
   return players.map((p, i) => ({ ...p, points: p.points + award[i] }));
 }
 
@@ -80,9 +122,10 @@ export function recompute(
   initial: VegasPlayer[],
   teams: VegasTeams,
   holes: VegasHole[],
+  ctx: VegasScoringContext = NO_CTX,
 ): VegasPlayer[] {
   return holes.reduce<VegasPlayer[]>(
-    (acc, h) => applyHole(acc, h, teams),
+    (acc, h, idx) => applyHole(acc, h, teams, idx, ctx),
     initial,
   );
 }
@@ -143,7 +186,7 @@ class VegasEngineImpl extends GameEngine<
   VegasState,
   VegasHole,
   VegasPlayer,
-  VegasTeams
+  VegasStartOptions
 > {
   readonly mode = "vegas" as const;
   readonly storageKey = VEGAS_STORAGE_KEY;
@@ -151,14 +194,19 @@ class VegasEngineImpl extends GameEngine<
   readonly minPlayers = VEGAS_PLAYER_COUNT;
   readonly maxPlayers = VEGAS_PLAYER_COUNT;
 
-  createInitialState(names: string[], teams: VegasTeams): VegasState | null {
+  createInitialState(
+    names: string[],
+    options: VegasStartOptions = DEFAULT_VEGAS_TEAMS,
+  ): VegasState | null {
     if (names.length !== VEGAS_PLAYER_COUNT) return null;
+    const teams: VegasTeams = { teamA: options.teamA, teamB: options.teamB };
     const t = teamsAreValid(teams) ? teams : DEFAULT_VEGAS_TEAMS;
     return {
       mode: "vegas",
       players: makeInitialPlayers(this.trimNames(names)),
       teams: t,
       holes: [],
+      handicap: options.handicap,
     };
   }
 
@@ -171,7 +219,13 @@ class VegasEngineImpl extends GameEngine<
   applyHole(state: VegasState, hole: VegasHole): VegasState {
     return {
       ...state,
-      players: applyHole(state.players, hole, state.teams),
+      players: applyHole(
+        state.players,
+        hole,
+        state.teams,
+        state.holes.length,
+        ctxFromState(state),
+      ),
       holes: [...state.holes, hole],
     };
   }
@@ -179,7 +233,12 @@ class VegasEngineImpl extends GameEngine<
   recompute(state: VegasState): VegasState {
     return {
       ...state,
-      players: recompute(resetPlayers(state.players), state.teams, state.holes),
+      players: recompute(
+        resetPlayers(state.players),
+        state.teams,
+        state.holes,
+        ctxFromState(state),
+      ),
     };
   }
 

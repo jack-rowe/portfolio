@@ -26,6 +26,7 @@ import {
     saveLastNames,
 } from "./_lib/storage";
 import type { GameMode } from "./_lib/types";
+import type { HandicapConfig } from "./_lib/handicap";
 import type {
     ScrambleFormat,
     ScrambleLayout,
@@ -92,7 +93,7 @@ export default function GauntletPage() {
             names: string[],
             mode: GameMode,
             opts?: {
-                handicaps?: number[];
+                handicap?: HandicapConfig;
                 scrambleLayout?: ScrambleLayout;
                 scrambleFormat?: ScrambleFormat;
             },
@@ -100,33 +101,38 @@ export default function GauntletPage() {
             saveLastMode(mode);
             saveLastNames(names);
             saveActiveMode(mode);
+            const handicap = opts?.handicap;
             switch (mode) {
                 case "gauntlet":
-                    gauntlet.startGame(names);
+                    gauntlet.startGame(names, { handicap });
                     break;
                 case "wolf":
-                    wolf.startGame(names);
+                    wolf.startGame(names, { handicap });
                     break;
                 case "vegas":
-                    vegas.startGame(names, DEFAULT_VEGAS_TEAMS);
+                    vegas.startGame(names, {
+                        ...DEFAULT_VEGAS_TEAMS,
+                        handicap,
+                    });
                     break;
                 case "hollywood":
-                    hollywood.startGame(names);
+                    hollywood.startGame(names, { handicap });
                     break;
                 case "lcr":
-                    lcr.startGame(names);
+                    lcr.startGame(names, { handicap });
                     break;
                 case "matchplay":
-                    matchplay.startGame(names);
+                    matchplay.startGame(names, { handicap });
                     break;
                 case "strokeplay":
-                    strokeplay.startGame(
-                        names,
-                        opts?.handicaps ?? names.map(() => 0),
-                    );
+                    strokeplay.startGame(names, {
+                        handicap,
+                        handicaps: handicap?.handicaps,
+                    });
                     break;
                 case "scramble":
                     scramble.startGame(names, {
+                        handicap,
                         layout: opts?.scrambleLayout ?? "2v2",
                         format: opts?.scrambleFormat ?? "matchplay",
                     });

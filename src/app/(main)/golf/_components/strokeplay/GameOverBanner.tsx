@@ -2,6 +2,7 @@
 
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type { CourseInfo } from "../../_lib/courseData";
 import { finalStandings, splitFor } from "../../_lib/strokeplay/engine";
 import type {
     StrokeplayHole,
@@ -12,12 +13,13 @@ type Props = {
     players: StrokeplayPlayer[];
     holes: StrokeplayHole[];
     onEditFinalHole: () => void;
+    course?: CourseInfo | null;
 };
 
-export function GameOverBanner({ players, holes, onEditFinalHole }: Props) {
+export function GameOverBanner({ players, holes, onEditFinalHole, course = null }: Props) {
     const { winner, coWinners, tied } = finalStandings(players);
     const winnerIdx = players.findIndex((p) => p.id === winner.id);
-    const winnerSplit = splitFor(winner, winnerIdx, holes);
+    const winnerSplit = splitFor(winner, winnerIdx, holes, course);
 
     return (
         <div

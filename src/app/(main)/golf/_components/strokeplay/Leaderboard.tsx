@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { CourseInfo } from "../../_lib/courseData";
 import { splitFor } from "../../_lib/strokeplay/engine";
 import type {
     StrokeplayHole,
@@ -14,14 +15,15 @@ type Props = {
     holes: StrokeplayHole[];
     isGameOver: boolean;
     onRename?: (playerId: string, name: string) => void;
+    course?: CourseInfo | null;
 };
 
-export function Leaderboard({ players, holes, isGameOver, onRename }: Props) {
+export function Leaderboard({ players, holes, isGameOver, onRename, course = null }: Props) {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editingName, setEditingName] = useState("");
 
     const rows = players
-        .map((p, i) => ({ player: p, split: splitFor(p, i, holes) }))
+        .map((p, i) => ({ player: p, split: splitFor(p, i, holes, course) }))
         .sort((a, b) => a.split.net - b.split.net);
 
     return (

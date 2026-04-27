@@ -166,6 +166,7 @@ export function LcrShell({ onResetToSetup }: Props) {
                             onEdit={() => {
                                 setEditingHole(clampedViewedHole);
                             }}
+                            handicap={state.handicap}
                         />
                     </>
                 )}
@@ -181,6 +182,7 @@ export function LcrShell({ onResetToSetup }: Props) {
                     holes={state.holes}
                     activeHoleIndex={isLiveEntry ? null : clampedViewedHole}
                     onSelectHole={setViewedHole}
+                    handicap={state.handicap}
                 />
             </div>
 

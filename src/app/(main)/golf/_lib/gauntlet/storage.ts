@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { HandicapConfigSchema } from "../handicap";
 import { GameStorage } from "../base/storage";
 import {
   GAUNTLET_MAX_PLAYERS,
@@ -27,6 +28,7 @@ export const GauntletStateSchema = z
       .array(z.array(z.number().int().positive()))
       .max(GAUNTLET_TOTAL_HOLES),
     finishedAt: z.number().int().nonnegative().optional(),
+    handicap: HandicapConfigSchema.optional(),
   })
   .superRefine((data, ctx) => {
     const playerCount = data.players.length;

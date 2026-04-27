@@ -3,18 +3,23 @@
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { getCourse } from "../../_lib/courseData";
 import { holeOutcome } from "../../_lib/lcr/engine";
-import type { LcrHole, LcrPlayer } from "../../_lib/lcr/types";
+import type { LcrHole, LcrPlayer, LcrState } from "../../_lib/lcr/types";
 
 type Props = {
     players: LcrPlayer[];
     holeIndex: number;
     hole: LcrHole;
     onEdit: () => void;
+    handicap?: LcrState["handicap"];
 };
 
-export function HoleView({ players, holeIndex, hole, onEdit }: Props) {
-    const out = holeOutcome(hole, players.length);
+export function HoleView({ players, holeIndex, hole, onEdit, handicap }: Props) {
+    const out = holeOutcome(hole, players.length, holeIndex, {
+        handicap,
+        course: getCourse(handicap?.courseId),
+    });
     const centerName = players[out.centerIndex].name;
     const outsideNames = out.outsideTeam.map((i) => players[i].name);
 

@@ -169,6 +169,7 @@ class ScrambleEngineImpl extends GameEngine<
       players: makeInitialPlayers(this.trimNames(names)),
       teams: teamsFor(options.layout),
       holes: [],
+      handicap: options.handicap,
     };
   }
 

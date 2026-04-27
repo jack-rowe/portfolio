@@ -1,3 +1,5 @@
+import type { HandicapConfig, HandicapStartOptions } from "../handicap";
+
 export const VEGAS_PLAYER_COUNT = 4;
 export const VEGAS_TOTAL_HOLES = 18;
 export const VEGAS_STORAGE_KEY = "vegas:v1";
@@ -25,7 +27,10 @@ export type VegasState = {
   teams: VegasTeams;
   holes: VegasHole[];
   finishedAt?: number;
+  handicap?: HandicapConfig;
 };
+
+export type VegasStartOptions = VegasTeams & HandicapStartOptions;
 
 /** Default pairing: P1+P2 vs P3+P4. */
 export const DEFAULT_VEGAS_TEAMS: VegasTeams = {

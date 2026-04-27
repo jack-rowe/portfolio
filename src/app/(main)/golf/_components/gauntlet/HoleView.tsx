@@ -12,6 +12,8 @@ type Props = {
     playersAfter: Player[];
     holeNumber: number;
     scores: HoleScores;
+    /** Net scores used for the beat-target comparison (gross when no handicap). */
+    netScores: number[];
     onEdit: () => void;
 };
 
@@ -20,6 +22,7 @@ export function HoleView({
     playersAfter,
     holeNumber,
     scores,
+    netScores,
     onEdit,
 }: Props) {
     const total = playersEntering.length;
@@ -30,7 +33,7 @@ export function HoleView({
                 {playersEntering.map((p, i) => {
                     const target = playersEntering[p.targetIndex];
                     const after = playersAfter[i];
-                    const beat = scores[i] < scores[p.targetIndex];
+                    const beat = netScores[i] < netScores[p.targetIndex];
                     const lapBefore = lapProgress(p, i, total);
                     const lapAfter = lapProgress(after, i, total);
                     const wonPoint = after.points > p.points;

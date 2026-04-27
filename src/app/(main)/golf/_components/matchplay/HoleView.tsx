@@ -3,10 +3,12 @@
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { getCourse } from "../../_lib/courseData";
 import { holeOutcome } from "../../_lib/matchplay/engine";
 import type {
     MatchplayHole,
     MatchplayPlayer,
+    MatchplayState,
 } from "../../_lib/matchplay/types";
 
 type Props = {
@@ -14,10 +16,14 @@ type Props = {
     holeIndex: number;
     hole: MatchplayHole;
     onEdit: () => void;
+    handicap?: MatchplayState["handicap"];
 };
 
-export function HoleView({ players, holeIndex, hole, onEdit }: Props) {
-    const out = holeOutcome(hole, players.length);
+export function HoleView({ players, holeIndex, hole, onEdit, handicap }: Props) {
+    const out = holeOutcome(hole, players.length, holeIndex, {
+        handicap,
+        course: getCourse(handicap?.courseId),
+    });
     let banner: string;
     if (out.result === "halve") banner = "Halved";
     else banner = `${players[out.bestPlayers[0]].name} wins +1`;

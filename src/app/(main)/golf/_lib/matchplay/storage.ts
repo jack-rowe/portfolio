@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { GameStorage } from "../base/storage";
+import { HandicapConfigSchema } from "../handicap";
 import {
   MATCHPLAY_MAX_PLAYERS,
   MATCHPLAY_MIN_PLAYERS,
@@ -30,6 +31,7 @@ const StateSchema = z
       .max(MATCHPLAY_MAX_PLAYERS),
     holes: z.array(HoleSchema).max(MATCHPLAY_TOTAL_HOLES),
     finishedAt: z.number().int().nonnegative().optional(),
+    handicap: HandicapConfigSchema.optional(),
   })
   .superRefine((data, ctx) => {
     const playerCount = data.players.length;

@@ -1,4 +1,8 @@
 import { GameEngine } from "../base/engine";
+import { getCourse } from "../courseData";
+import type { CourseInfo } from "../courseData";
+import { netScoresForHole } from "../handicap";
+import type { HandicapConfig, HandicapStartOptions } from "../handicap";
 import { gauntletStorage } from "./storage";
 import {
   GAUNTLET_MAX_PLAYERS,
@@ -7,6 +11,20 @@ import {
   GAUNTLET_TOTAL_HOLES,
 } from "./types";
 import type { GauntletState, HoleScores, Player } from "./types";
+
+export type GauntletScoringContext = {
+  handicap?: HandicapConfig;
+  course: CourseInfo | null;
+};
+
+const NO_CTX: GauntletScoringContext = { course: null };
+
+function ctxFromState(state: GauntletState): GauntletScoringContext {
+  return {
+    handicap: state.handicap,
+    course: getCourse(state.handicap?.courseId),
+  };
+}
 
 /** Advance a single player's target by one slot, skipping themselves. */
 export function advanceTarget(
@@ -38,11 +56,17 @@ export function chaseOrder(
 }
 
 /** Apply a single hole's scores to the player list, returning a new array. */
-export function applyHole(players: Player[], scores: HoleScores): Player[] {
+export function applyHole(
+  players: Player[],
+  scores: HoleScores,
+  holeIndex = 0,
+  ctx: GauntletScoringContext = NO_CTX,
+): Player[] {
   const total = players.length;
+  const net = netScoresForHole(scores, holeIndex, ctx.handicap, ctx.course);
   return players.map((p, i) => {
-    const myScore = scores[i];
-    const targetScore = scores[p.targetIndex];
+    const myScore = net[i];
+    const targetScore = net[p.targetIndex];
     if (myScore >= targetScore) return { ...p };
     const next = advanceTarget(i, p.targetIndex, total);
     if (next === p.startTargetIndex) {
@@ -57,9 +81,10 @@ export function applyHole(players: Player[], scores: HoleScores): Player[] {
 export function recompute(
   initialPlayers: Player[],
   holes: HoleScores[],
+  ctx: GauntletScoringContext = NO_CTX,
 ): Player[] {
   return holes.reduce<Player[]>(
-    (players, scores) => applyHole(players, scores),
+    (players, scores, idx) => applyHole(players, scores, idx, ctx),
     initialPlayers,
   );
 }
@@ -104,20 +129,22 @@ export type HoleOutcome = {
 export function holeOutcomes(
   initialPlayers: Player[],
   holes: HoleScores[],
+  ctx: GauntletScoringContext = NO_CTX,
 ): HoleOutcome[][] {
   const matrix: HoleOutcome[][] = [];
   let players = initialPlayers;
-  for (const scores of holes) {
+  holes.forEach((scores, idx) => {
     const before = players;
-    const after = applyHole(before, scores);
+    const after = applyHole(before, scores, idx, ctx);
+    const net = netScoresForHole(scores, idx, ctx.handicap, ctx.course);
     matrix.push(
       before.map((p, i) => ({
-        advanced: scores[i] < scores[p.targetIndex],
+        advanced: net[i] < net[p.targetIndex],
         gauntlet: after[i].points > p.points,
       })),
     );
     players = after;
-  }
+  });
   return matrix;
 }
 
@@ -182,20 +209,29 @@ function makeId(seed: number): string {
   return `p-${String(seed)}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-class GauntletEngineImpl extends GameEngine<GauntletState, HoleScores, Player> {
+class GauntletEngineImpl extends GameEngine<
+  GauntletState,
+  HoleScores,
+  Player,
+  HandicapStartOptions
+> {
   readonly mode = "gauntlet" as const;
   readonly storageKey = GAUNTLET_STORAGE_KEY;
   readonly totalHoles = GAUNTLET_TOTAL_HOLES;
   readonly minPlayers = GAUNTLET_MIN_PLAYERS;
   readonly maxPlayers = GAUNTLET_MAX_PLAYERS;
 
-  createInitialState(names: string[]): GauntletState | null {
+  createInitialState(
+    names: string[],
+    options: HandicapStartOptions = {},
+  ): GauntletState | null {
     if (names.length < this.minPlayers) return null;
     if (names.length > this.maxPlayers) return null;
     return {
       mode: "gauntlet",
       players: makeInitialPlayers(this.trimNames(names)),
       holes: [],
+      handicap: options.handicap,
     };
   }
 
@@ -208,7 +244,12 @@ class GauntletEngineImpl extends GameEngine<GauntletState, HoleScores, Player> {
   applyHole(state: GauntletState, hole: HoleScores): GauntletState {
     return {
       ...state,
-      players: applyHole(state.players, hole),
+      players: applyHole(
+        state.players,
+        hole,
+        state.holes.length,
+        ctxFromState(state),
+      ),
       holes: [...state.holes, hole],
     };
   }
@@ -216,7 +257,11 @@ class GauntletEngineImpl extends GameEngine<GauntletState, HoleScores, Player> {
   recompute(state: GauntletState): GauntletState {
     return {
       ...state,
-      players: recompute(resetPlayers(state.players), state.holes),
+      players: recompute(
+        resetPlayers(state.players),
+        state.holes,
+        ctxFromState(state),
+      ),
     };
   }
 

@@ -1,4 +1,8 @@
 import { GameEngine } from "../base/engine";
+import { getCourse } from "../courseData";
+import type { CourseInfo } from "../courseData";
+import { netScoresForHole } from "../handicap";
+import type { HandicapConfig, HandicapStartOptions } from "../handicap";
 import { hollywoodStorage } from "./storage";
 import type {
   HollywoodHole,
@@ -12,6 +16,20 @@ import {
   HOLLYWOOD_STORAGE_KEY,
   HOLLYWOOD_TOTAL_HOLES,
 } from "./types";
+
+export type HollywoodScoringContext = {
+  handicap?: HandicapConfig;
+  course: CourseInfo | null;
+};
+
+const NO_CTX: HollywoodScoringContext = { course: null };
+
+function ctxFromState(state: HollywoodState): HollywoodScoringContext {
+  return {
+    handicap: state.handicap,
+    course: getCourse(state.handicap?.courseId),
+  };
+}
 
 /**
  * 6-6-6 partner rotation. Three fixed segments of 6 holes:
@@ -58,11 +76,18 @@ export function holeOutcome(
   hole: HollywoodHole,
   holeIndex: number,
   playerCount: number,
+  ctx: HollywoodScoringContext = NO_CTX,
 ): HollywoodHoleOutcome {
   const seg = segmentOf(holeIndex);
   const { teamA, teamB } = SEGMENTS[seg];
-  const bestA = bestScore(hole.scores, teamA);
-  const bestB = bestScore(hole.scores, teamB);
+  const net = netScoresForHole(
+    hole.scores,
+    holeIndex,
+    ctx.handicap,
+    ctx.course,
+  );
+  const bestA = bestScore(net, teamA);
+  const bestB = bestScore(net, teamB);
   let winner: "A" | "B" | "tie" = "tie";
   if (bestA < bestB) winner = "A";
   else if (bestB < bestA) winner = "B";
@@ -76,17 +101,19 @@ export function applyHole(
   players: HollywoodPlayer[],
   hole: HollywoodHole,
   holeIndex: number,
+  ctx: HollywoodScoringContext = NO_CTX,
 ): HollywoodPlayer[] {
-  const { award } = holeOutcome(hole, holeIndex, players.length);
+  const { award } = holeOutcome(hole, holeIndex, players.length, ctx);
   return players.map((p, i) => ({ ...p, points: p.points + award[i] }));
 }
 
 export function recompute(
   initial: HollywoodPlayer[],
   holes: HollywoodHole[],
+  ctx: HollywoodScoringContext = NO_CTX,
 ): HollywoodPlayer[] {
   return holes.reduce<HollywoodPlayer[]>(
-    (acc, h, idx) => applyHole(acc, h, idx),
+    (acc, h, idx) => applyHole(acc, h, idx, ctx),
     initial,
   );
 }
@@ -111,7 +138,10 @@ export type SegmentScore = {
   winner: "A" | "B" | "tie";
 };
 
-export function segmentScores(holes: HollywoodHole[]): SegmentScore[] {
+export function segmentScores(
+  holes: HollywoodHole[],
+  ctx: HollywoodScoringContext = NO_CTX,
+): SegmentScore[] {
   const result: SegmentScore[] = SEGMENTS.map(() => ({
     teamAWins: 0,
     teamBWins: 0,
@@ -119,7 +149,7 @@ export function segmentScores(holes: HollywoodHole[]): SegmentScore[] {
     winner: "tie",
   }));
   holes.forEach((h, idx) => {
-    const out = holeOutcome(h, idx, HOLLYWOOD_PLAYER_COUNT);
+    const out = holeOutcome(h, idx, HOLLYWOOD_PLAYER_COUNT, ctx);
     const seg = result[out.segment];
     if (out.winner === "A") seg.teamAWins++;
     else if (out.winner === "B") seg.teamBWins++;
@@ -162,7 +192,8 @@ function makeId(i: number): string {
 class HollywoodEngineImpl extends GameEngine<
   HollywoodState,
   HollywoodHole,
-  HollywoodPlayer
+  HollywoodPlayer,
+  HandicapStartOptions
 > {
   readonly mode = "hollywood" as const;
   readonly storageKey = HOLLYWOOD_STORAGE_KEY;
@@ -170,12 +201,16 @@ class HollywoodEngineImpl extends GameEngine<
   readonly minPlayers = HOLLYWOOD_PLAYER_COUNT;
   readonly maxPlayers = HOLLYWOOD_PLAYER_COUNT;
 
-  createInitialState(names: string[]): HollywoodState | null {
+  createInitialState(
+    names: string[],
+    options: HandicapStartOptions = {},
+  ): HollywoodState | null {
     if (names.length !== HOLLYWOOD_PLAYER_COUNT) return null;
     return {
       mode: "hollywood",
       players: makeInitialPlayers(this.trimNames(names)),
       holes: [],
+      handicap: options.handicap,
     };
   }
 
@@ -188,7 +223,12 @@ class HollywoodEngineImpl extends GameEngine<
   applyHole(state: HollywoodState, hole: HollywoodHole): HollywoodState {
     return {
       ...state,
-      players: applyHole(state.players, hole, state.holes.length),
+      players: applyHole(
+        state.players,
+        hole,
+        state.holes.length,
+        ctxFromState(state),
+      ),
       holes: [...state.holes, hole],
     };
   }
@@ -196,7 +236,11 @@ class HollywoodEngineImpl extends GameEngine<
   recompute(state: HollywoodState): HollywoodState {
     return {
       ...state,
-      players: recompute(resetPlayers(state.players), state.holes),
+      players: recompute(
+        resetPlayers(state.players),
+        state.holes,
+        ctxFromState(state),
+      ),
     };
   }
 

@@ -9,6 +9,7 @@ type Props = {
     playersAfter: Player[];
     holeNumber: number;
     scores: HoleScores;
+    netScores: number[];
     onEdit: () => void;
     showGameOverBanner: boolean;
     gameOverPlayers: Player[];
@@ -21,6 +22,7 @@ export function RecapSection({
     playersAfter,
     holeNumber,
     scores,
+    netScores,
     onEdit,
     showGameOverBanner,
     gameOverPlayers,
@@ -41,6 +43,7 @@ export function RecapSection({
                 playersAfter={playersAfter}
                 holeNumber={holeNumber}
                 scores={scores}
+                netScores={netScores}
                 onEdit={onEdit}
             />
         </>

@@ -2,14 +2,16 @@
 
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
+import { getCourse } from "../../_lib/courseData";
 import { holeOutcome } from "../../_lib/lcr/engine";
-import type { LcrHole, LcrPlayer } from "../../_lib/lcr/types";
+import type { LcrHole, LcrPlayer, LcrState } from "../../_lib/lcr/types";
 
 type Props = {
     players: LcrPlayer[];
     holes: LcrHole[];
     activeHoleIndex: number | null;
     onSelectHole: (holeIndex: number) => void;
+    handicap?: LcrState["handicap"];
 };
 
 const COL_WIDTH = "w-12";
@@ -20,10 +22,14 @@ export function Scorecard({
     holes,
     activeHoleIndex,
     onSelectHole,
+    handicap,
 }: Props) {
     const outcomes = useMemo(
-        () => holes.map((h) => holeOutcome(h, players.length)),
-        [holes, players.length],
+        () => {
+            const ctx = { handicap, course: getCourse(handicap?.courseId) };
+            return holes.map((h, i) => holeOutcome(h, players.length, i, ctx));
+        },
+        [holes, players.length, handicap],
     );
 
     if (holes.length === 0) return null;

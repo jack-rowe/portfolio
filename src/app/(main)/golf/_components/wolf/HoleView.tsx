@@ -3,14 +3,16 @@
 import { Pencil, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { getCourse } from "../../_lib/courseData";
 import { holeOutcome } from "../../_lib/wolf/engine";
-import type { WolfHole, WolfPlayer } from "../../_lib/wolf/types";
+import type { WolfHole, WolfPlayer, WolfState } from "../../_lib/wolf/types";
 
 type Props = {
     players: WolfPlayer[];
     hole: WolfHole;
     holeNumber: number;
     onEdit: () => void;
+    handicap?: WolfState["handicap"];
 };
 
 function decisionLabel(hole: WolfHole, partnerName?: string): string {
@@ -20,8 +22,11 @@ function decisionLabel(hole: WolfHole, partnerName?: string): string {
     return hole.decision.blind ? "Blind Wolf" : "Lone Wolf";
 }
 
-export function HoleView({ players, hole, holeNumber, onEdit }: Props) {
-    const outcome = holeOutcome(hole, holeNumber - 1, players.length);
+export function HoleView({ players, hole, holeNumber, onEdit, handicap }: Props) {
+    const outcome = holeOutcome(hole, holeNumber - 1, players.length, {
+        handicap,
+        course: getCourse(handicap?.courseId),
+    });
     const wolf = players[outcome.wolfIndex];
     const partnerName =
         hole.decision.kind === "partner"

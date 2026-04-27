@@ -20,14 +20,14 @@ export type UseStrokeplay = Omit<
   >,
   "startGame"
 > & {
-  startGame: (names: string[], handicaps: number[]) => void;
+  startGame: (names: string[], options?: StrokeplayStartOptions) => void;
 };
 
 export function useStrokeplay(): UseStrokeplay {
   const game = useGame(strokeplayEngine);
   const startGame = useCallback(
-    (names: string[], handicaps: number[]) => {
-      game.startGame(names, { handicaps });
+    (names: string[], options: StrokeplayStartOptions = {}) => {
+      game.startGame(names, options);
     },
     [game],
   );

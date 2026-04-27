@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useStrokeplay } from "../../_hooks/use-strokeplay";
+import { getCourse } from "../../_lib/courseData";
 import type {
     StrokeplayHole,
     StrokeplayState,
@@ -66,6 +67,8 @@ export function StrokeplayShell({ onResetToSetup }: Props) {
         : 0;
 
     if (!state) return null;
+
+    const course = getCourse(state.handicap?.courseId);
 
     const totalHoles = state.finishedAt ?? STROKEPLAY_TOTAL_HOLES;
     const isLiveEntry =
@@ -167,12 +170,14 @@ export function StrokeplayShell({ onResetToSetup }: Props) {
                                 onEditFinalHole={() => {
                                     setEditingHole(state.holes.length - 1);
                                 }}
+                                course={course}
                             />
                         )}
                         <HoleView
                             players={state.players}
                             holeIndex={clampedViewedHole}
                             hole={state.holes[clampedViewedHole]}
+                            handicap={state.handicap}
                             onEdit={() => {
                                 setEditingHole(clampedViewedHole);
                             }}
@@ -185,6 +190,7 @@ export function StrokeplayShell({ onResetToSetup }: Props) {
                     holes={state.holes}
                     isGameOver={isGameOver}
                     onRename={renamePlayer}
+                    course={course}
                 />
 
                 <Scorecard
@@ -192,6 +198,8 @@ export function StrokeplayShell({ onResetToSetup }: Props) {
                     holes={state.holes}
                     activeHoleIndex={isLiveEntry ? null : clampedViewedHole}
                     onSelectHole={setViewedHole}
+                    course={course}
+                    handicap={state.handicap}
                 />
             </div>
 

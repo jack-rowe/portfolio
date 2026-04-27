@@ -1,4 +1,8 @@
 import { GameEngine } from "../base/engine";
+import { getCourse } from "../courseData";
+import type { CourseInfo } from "../courseData";
+import { netScoresForHole } from "../handicap";
+import type { HandicapConfig, HandicapStartOptions } from "../handicap";
 import { matchplayStorage } from "./storage";
 import type { MatchplayHole, MatchplayPlayer, MatchplayState } from "./types";
 import {
@@ -7,6 +11,20 @@ import {
   MATCHPLAY_STORAGE_KEY,
   MATCHPLAY_TOTAL_HOLES,
 } from "./types";
+
+export type MatchplayScoringContext = {
+  handicap?: HandicapConfig;
+  course: CourseInfo | null;
+};
+
+const NO_CTX: MatchplayScoringContext = { course: null };
+
+function ctxFromState(state: MatchplayState): MatchplayScoringContext {
+  return {
+    handicap: state.handicap,
+    course: getCourse(state.handicap?.courseId),
+  };
+}
 
 export type MatchplayHoleOutcome = {
   /** Lowest score on the hole. */
@@ -22,14 +40,22 @@ export type MatchplayHoleOutcome = {
 export function holeOutcome(
   hole: MatchplayHole,
   playerCount: number,
+  holeIndex = 0,
+  ctx: MatchplayScoringContext = NO_CTX,
 ): MatchplayHoleOutcome {
   const award: number[] = Array.from({ length: playerCount }, () => 0);
+  const net = netScoresForHole(
+    hole.scores,
+    holeIndex,
+    ctx.handicap,
+    ctx.course,
+  );
   let best = Number.POSITIVE_INFINITY;
-  for (const s of hole.scores) {
+  for (const s of net) {
     if (s < best) best = s;
   }
   const bestPlayers: number[] = [];
-  hole.scores.forEach((s, i) => {
+  net.forEach((s, i) => {
     if (s === best) bestPlayers.push(i);
   });
   if (bestPlayers.length === 1) {
@@ -39,24 +65,32 @@ export function holeOutcome(
   return { bestScore: best, bestPlayers, result: "halve", award };
 }
 
-export function awardHole(hole: MatchplayHole, playerCount: number): number[] {
-  return holeOutcome(hole, playerCount).award;
+export function awardHole(
+  hole: MatchplayHole,
+  playerCount: number,
+  holeIndex = 0,
+  ctx: MatchplayScoringContext = NO_CTX,
+): number[] {
+  return holeOutcome(hole, playerCount, holeIndex, ctx).award;
 }
 
 export function applyHole(
   players: MatchplayPlayer[],
   hole: MatchplayHole,
+  holeIndex = 0,
+  ctx: MatchplayScoringContext = NO_CTX,
 ): MatchplayPlayer[] {
-  const award = awardHole(hole, players.length);
+  const award = awardHole(hole, players.length, holeIndex, ctx);
   return players.map((p, i) => ({ ...p, points: p.points + award[i] }));
 }
 
 export function recompute(
   initial: MatchplayPlayer[],
   holes: MatchplayHole[],
+  ctx: MatchplayScoringContext = NO_CTX,
 ): MatchplayPlayer[] {
   return holes.reduce<MatchplayPlayer[]>(
-    (acc, h) => applyHole(acc, h),
+    (acc, h, idx) => applyHole(acc, h, idx, ctx),
     initial,
   );
 }
@@ -98,7 +132,8 @@ function makeId(i: number): string {
 class MatchplayEngineImpl extends GameEngine<
   MatchplayState,
   MatchplayHole,
-  MatchplayPlayer
+  MatchplayPlayer,
+  HandicapStartOptions
 > {
   readonly mode = "matchplay" as const;
   readonly storageKey = MATCHPLAY_STORAGE_KEY;
@@ -106,13 +141,17 @@ class MatchplayEngineImpl extends GameEngine<
   readonly minPlayers = MATCHPLAY_MIN_PLAYERS;
   readonly maxPlayers = MATCHPLAY_MAX_PLAYERS;
 
-  createInitialState(names: string[]): MatchplayState | null {
+  createInitialState(
+    names: string[],
+    options: HandicapStartOptions = {},
+  ): MatchplayState | null {
     if (names.length < this.minPlayers) return null;
     if (names.length > this.maxPlayers) return null;
     return {
       mode: "matchplay",
       players: makeInitialPlayers(this.trimNames(names)),
       holes: [],
+      handicap: options.handicap,
     };
   }
 
@@ -125,7 +164,12 @@ class MatchplayEngineImpl extends GameEngine<
   applyHole(state: MatchplayState, hole: MatchplayHole): MatchplayState {
     return {
       ...state,
-      players: applyHole(state.players, hole),
+      players: applyHole(
+        state.players,
+        hole,
+        state.holes.length,
+        ctxFromState(state),
+      ),
       holes: [...state.holes, hole],
     };
   }
@@ -133,7 +177,11 @@ class MatchplayEngineImpl extends GameEngine<
   recompute(state: MatchplayState): MatchplayState {
     return {
       ...state,
-      players: recompute(resetPlayers(state.players), state.holes),
+      players: recompute(
+        resetPlayers(state.players),
+        state.holes,
+        ctxFromState(state),
+      ),
     };
   }
 

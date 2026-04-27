@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { GameStorage } from "../base/storage";
+import { HandicapConfigSchema } from "../handicap";
 import {
   VEGAS_PLAYER_COUNT,
   VEGAS_STORAGE_KEY,
@@ -52,6 +53,7 @@ const StateSchema = z
     teams: TeamsSchema,
     holes: z.array(HoleSchema).max(VEGAS_TOTAL_HOLES),
     finishedAt: z.number().int().nonnegative().optional(),
+    handicap: HandicapConfigSchema.optional(),
   })
   .superRefine((data, ctx) => {
     if (data.finishedAt !== undefined && data.finishedAt > data.holes.length) {

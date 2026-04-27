@@ -1,4 +1,5 @@
 import type { BasePlayer, BaseState } from "../base/types";
+import type { HandicapStartOptions } from "../handicap";
 
 export const SCRAMBLE_PLAYER_COUNT = 4;
 export const SCRAMBLE_MIN_PLAYERS = SCRAMBLE_PLAYER_COUNT;
@@ -25,7 +26,7 @@ export type ScrambleState = BaseState<ScramblePlayer, ScrambleHole> & {
   teams: number[][];
 };
 
-export type ScrambleStartOptions = {
+export type ScrambleStartOptions = HandicapStartOptions & {
   layout: ScrambleLayout;
   format: ScrambleFormat;
 };

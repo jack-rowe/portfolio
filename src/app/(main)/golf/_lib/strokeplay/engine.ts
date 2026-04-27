@@ -1,4 +1,6 @@
 import { GameEngine } from "../base/engine";
+import type { CourseInfo } from "../courseData";
+import { buildHandicapConfig } from "../handicap";
 import { strokeplayStorage } from "./storage";
 import type {
   StrokeplayHole,
@@ -24,12 +26,21 @@ export type StrokeplaySplit = {
   total: number;
   /** Total minus handicap. May be negative for low handicaps + low totals. */
   net: number;
+  /** Holes-played par data (only present when course selected). */
+  par?: {
+    frontPar: number;
+    backPar: number;
+    totalPar: number;
+    /** total - par over only completed holes. */
+    toPar: number;
+  };
 };
 
 export function splitFor(
   player: StrokeplayPlayer,
   playerIdx: number,
   holes: StrokeplayHole[],
+  course: CourseInfo | null = null,
 ): StrokeplaySplit {
   let front = 0;
   let back = 0;
@@ -39,7 +50,30 @@ export function splitFor(
     else back += s;
   });
   const total = front + back;
-  return { front, back, total, net: total - player.handicap };
+  const split: StrokeplaySplit = {
+    front,
+    back,
+    total,
+    net: total - player.handicap,
+  };
+  if (course) {
+    let parTotal = 0;
+    let parFront = 0;
+    let parBack = 0;
+    holes.forEach((_, i) => {
+      const p = course.holes[i]?.par ?? 0;
+      parTotal += p;
+      if (i < STROKEPLAY_FRONT_NINE) parFront += p;
+      else parBack += p;
+    });
+    split.par = {
+      frontPar: parFront,
+      backPar: parBack,
+      totalPar: parTotal,
+      toPar: total - parTotal,
+    };
+  }
+  return split;
 }
 
 export function applyHole(
@@ -133,18 +167,30 @@ class StrokeplayEngineImpl extends GameEngine<
 
   createInitialState(
     names: string[],
-    options: StrokeplayStartOptions,
+    options: StrokeplayStartOptions = {},
   ): StrokeplayState | null {
     if (names.length < this.minPlayers) return null;
     if (names.length > this.maxPlayers) return null;
-    const handicaps = options.handicaps;
+    // Resolve handicaps: prefer explicit options.handicaps; else derive from
+    // options.handicap config; else default to zeros.
+    const fromConfig = options.handicap?.handicaps;
+    const handicaps =
+      options.handicaps ??
+      (Array.isArray(fromConfig) && fromConfig.length === names.length
+        ? fromConfig
+        : Array.from({ length: names.length }, () => 0));
     if (!Array.isArray(handicaps) || handicaps.length !== names.length) {
       return null;
     }
+    // Mirror handicaps into HandicapConfig if not already provided so the rest
+    // of the system can read state.handicap uniformly.
+    const handicap =
+      options.handicap ?? buildHandicapConfig("gross", undefined, handicaps);
     return {
       mode: "strokeplay",
       players: makeInitialPlayers(this.trimNames(names), handicaps),
       holes: [],
+      handicap,
     };
   }
 

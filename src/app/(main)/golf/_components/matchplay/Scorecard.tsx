@@ -2,10 +2,12 @@
 
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
+import { getCourse } from "../../_lib/courseData";
 import { holeOutcome } from "../../_lib/matchplay/engine";
 import type {
     MatchplayHole,
     MatchplayPlayer,
+    MatchplayState,
 } from "../../_lib/matchplay/types";
 
 type Props = {
@@ -13,6 +15,7 @@ type Props = {
     holes: MatchplayHole[];
     activeHoleIndex: number | null;
     onSelectHole: (holeIndex: number) => void;
+    handicap?: MatchplayState["handicap"];
 };
 
 const COL_WIDTH = "w-12";
@@ -23,10 +26,14 @@ export function Scorecard({
     holes,
     activeHoleIndex,
     onSelectHole,
+    handicap,
 }: Props) {
     const outcomes = useMemo(
-        () => holes.map((h) => holeOutcome(h, players.length)),
-        [holes, players.length],
+        () => {
+            const ctx = { handicap, course: getCourse(handicap?.courseId) };
+            return holes.map((h, i) => holeOutcome(h, players.length, i, ctx));
+        },
+        [holes, players.length, handicap],
     );
 
     if (holes.length === 0) return null;

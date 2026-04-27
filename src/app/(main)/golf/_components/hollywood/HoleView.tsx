@@ -3,10 +3,12 @@
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { getCourse } from "../../_lib/courseData";
 import { holeOutcome } from "../../_lib/hollywood/engine";
 import type {
     HollywoodHole,
     HollywoodPlayer,
+    HollywoodState,
 } from "../../_lib/hollywood/types";
 
 const SEGMENT_LABELS = ["Front 6", "Middle 6", "Back 6"];
@@ -16,10 +18,14 @@ type Props = {
     holeIndex: number;
     hole: HollywoodHole;
     onEdit: () => void;
+    handicap?: HollywoodState["handicap"];
 };
 
-export function HoleView({ players, holeIndex, hole, onEdit }: Props) {
-    const out = holeOutcome(hole, holeIndex, players.length);
+export function HoleView({ players, holeIndex, hole, onEdit, handicap }: Props) {
+    const out = holeOutcome(hole, holeIndex, players.length, {
+        handicap,
+        course: getCourse(handicap?.courseId),
+    });
     const segLabel = SEGMENT_LABELS[out.segment];
     const winnerLabel =
         out.winner === "tie" ? "Halved" : `Team ${out.winner} wins hole`;

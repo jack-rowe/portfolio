@@ -2,10 +2,13 @@
 
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
+import type { CourseInfo } from "../../_lib/courseData";
+import { netScoresForHole } from "../../_lib/handicap";
 import { splitFor } from "../../_lib/strokeplay/engine";
 import type {
     StrokeplayHole,
     StrokeplayPlayer,
+    StrokeplayState,
 } from "../../_lib/strokeplay/types";
 import { STROKEPLAY_FRONT_NINE } from "../../_lib/strokeplay/types";
 
@@ -14,6 +17,8 @@ type Props = {
     holes: StrokeplayHole[];
     activeHoleIndex: number | null;
     onSelectHole: (holeIndex: number) => void;
+    course?: CourseInfo | null;
+    handicap?: StrokeplayState["handicap"];
 };
 
 const COL_WIDTH = "w-12";
@@ -25,14 +30,23 @@ export function Scorecard({
     holes,
     activeHoleIndex,
     onSelectHole,
+    course = null,
+    handicap,
 }: Props) {
     const splits = useMemo(
-        () => players.map((p, i) => splitFor(p, i, holes)),
-        [players, holes],
+        () => players.map((p, i) => splitFor(p, i, holes, course)),
+        [players, holes, course],
+    );
+    const netPerHole = useMemo(
+        () =>
+            holes.map((h, hi) =>
+                netScoresForHole(h.scores, hi, handicap, course),
+            ),
+        [holes, handicap, course],
     );
     const bestPerHole = useMemo(
-        () => holes.map((h) => Math.min(...h.scores)),
-        [holes],
+        () => netPerHole.map((n) => Math.min(...n)),
+        [netPerHole],
     );
 
     if (holes.length === 0) return null;
@@ -105,7 +119,7 @@ export function Scorecard({
                                         score={h.scores[i]}
                                         isBest={
                                             players.length > 1 &&
-                                            h.scores[i] === bestPerHole[hi]
+                                            netPerHole[hi][i] === bestPerHole[hi]
                                         }
                                         active={activeHoleIndex === hi}
                                         onClick={() => {
@@ -124,7 +138,7 @@ export function Scorecard({
                                             score={h.scores[i]}
                                             isBest={
                                                 players.length > 1 &&
-                                                h.scores[i] ===
+                                                netPerHole[idx][i] ===
                                                 bestPerHole[idx]
                                             }
                                             active={activeHoleIndex === idx}
