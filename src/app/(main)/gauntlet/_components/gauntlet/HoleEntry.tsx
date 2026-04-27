@@ -5,8 +5,8 @@ import { ArrowRight, Minus, Plus, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { Player, HoleScores } from "../_lib/types";
-import { TOTAL_HOLES } from "../_lib/types";
+import type { Player, HoleScores } from "../../_lib/gauntlet/types";
+import { GAUNTLET_TOTAL_HOLES as TOTAL_HOLES } from "../../_lib/gauntlet/types";
 
 type Props = {
     players: Player[];

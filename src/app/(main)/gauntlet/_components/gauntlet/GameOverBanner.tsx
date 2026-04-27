@@ -2,8 +2,8 @@
 
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { finalStandings } from "../_lib/engine";
-import type { Player } from "../_lib/types";
+import { finalStandings } from "../../_lib/gauntlet/engine";
+import type { Player } from "../../_lib/gauntlet/types";
 
 type Props = {
     players: Player[];

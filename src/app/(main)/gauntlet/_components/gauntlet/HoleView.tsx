@@ -2,8 +2,8 @@
 
 import { ArrowRight, Pencil, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { lapProgress } from "../_lib/engine";
-import type { HoleScores, Player } from "../_lib/types";
+import { lapProgress } from "../../_lib/gauntlet/engine";
+import type { HoleScores, Player } from "../../_lib/gauntlet/types";
 
 type Props = {
     /** Player state ENTERING this hole (i.e. after holes 0..holeIndex-1). */

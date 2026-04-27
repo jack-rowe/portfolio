@@ -2,7 +2,7 @@
 
 import { GameOverBanner } from "./GameOverBanner";
 import { HoleView } from "./HoleView";
-import type { HoleScores, Player } from "../_lib/types";
+import type { HoleScores, Player } from "../../_lib/gauntlet/types";
 
 type Props = {
     playersEntering: Player[];

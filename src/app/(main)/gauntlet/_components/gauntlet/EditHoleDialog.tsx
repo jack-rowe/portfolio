@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { HoleScores, Player } from "../_lib/types";
+import type { HoleScores, Player } from "../../_lib/gauntlet/types";
 
 type Props = {
     open: boolean;

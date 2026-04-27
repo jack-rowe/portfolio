@@ -6,16 +6,102 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { loadLastNames } from "../_lib/storage";
+import { loadLastMode, loadLastNames } from "../_lib/storage";
 import {
+    DEFAULT_GAME_MODE,
     DEFAULT_PLAYER_COUNT,
     MAX_PLAYERS,
     MIN_PLAYERS,
 } from "../_lib/types";
+import type { GameMode } from "../_lib/types";
+import { LCR_PLAYER_COUNT } from "../_lib/lcr/types";
+import {
+    MATCHPLAY_MAX_PLAYERS,
+    MATCHPLAY_MIN_PLAYERS,
+} from "../_lib/matchplay/types";
+import { WOLF_PLAYER_COUNT } from "../_lib/wolf/types";
+
+type PlayerBounds = { min: number; max: number; fixed: number | null };
+
+function playerBounds(mode: GameMode): PlayerBounds {
+    if (mode === "wolf" || mode === "vegas" || mode === "hollywood") {
+        return { min: WOLF_PLAYER_COUNT, max: WOLF_PLAYER_COUNT, fixed: WOLF_PLAYER_COUNT };
+    }
+    if (mode === "lcr") {
+        return { min: LCR_PLAYER_COUNT, max: LCR_PLAYER_COUNT, fixed: LCR_PLAYER_COUNT };
+    }
+    if (mode === "matchplay") {
+        return { min: MATCHPLAY_MIN_PLAYERS, max: MATCHPLAY_MAX_PLAYERS, fixed: null };
+    }
+    // gauntlet: 3-4
+    return { min: 3, max: MAX_PLAYERS, fixed: null };
+}
+
+function computeLockMessage(
+    label: string,
+    bounds: PlayerBounds,
+): string | null {
+    if (bounds.fixed !== null) {
+        return `${label} is played with exactly ${String(bounds.fixed)} players.`;
+    }
+    return `${label} supports ${String(bounds.min)} to ${String(bounds.max)} players.`;
+}
 
 type Props = {
-    onStart: (names: string[]) => void;
+    onStart: (names: string[], mode: GameMode) => void;
 };
+
+type GameModeOption = {
+    id: GameMode;
+    label: string;
+    description: string;
+    available: boolean;
+};
+
+const GAME_MODES: GameModeOption[] = [
+    {
+        id: "gauntlet",
+        label: "Gauntlet",
+        description:
+            "Beat your target on a hole and advance. Lap the field to score a point.",
+        available: true,
+    },
+    {
+        id: "wolf",
+        label: "Wolf",
+        description:
+            "Rotating Wolf picks a partner or goes Lone. 4 players, 18 holes.",
+        available: true,
+    },
+    {
+        id: "vegas",
+        label: "Vegas",
+        description:
+            "Fixed teams of 2. Two-digit team numbers; difference is the swing.",
+        available: true,
+    },
+    {
+        id: "hollywood",
+        label: "6-6-6",
+        description:
+            "Hollywood. Best-ball match. Partners rotate every 6 holes.",
+        available: true,
+    },
+    {
+        id: "lcr",
+        label: "LCR",
+        description:
+            "Center plays solo vs. the outside team's best ball. 3 players; pick Center each hole based on tee-shot location.",
+        available: true,
+    },
+    {
+        id: "matchplay",
+        label: "Match Play",
+        description:
+            "Lowest score wins the hole. Halves on ties. 2-4 players.",
+        available: true,
+    },
+];
 
 const PLAYER_COUNT_OPTIONS = Array.from(
     { length: MAX_PLAYERS - MIN_PLAYERS + 1 },
@@ -40,6 +126,7 @@ function findDuplicates(names: string[]): Set<string> {
 }
 
 export function Setup({ onStart }: Props) {
+    const [mode, setMode] = useState<GameMode>(DEFAULT_GAME_MODE);
     const [playerCount, setPlayerCount] =
         useState<number>(DEFAULT_PLAYER_COUNT);
     const [names, setNames] = useState<string[]>(makeEmptyNames);
@@ -48,8 +135,10 @@ export function Setup({ onStart }: Props) {
     const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
     const baseId = useId();
 
-    // Hydrate prefilled names from last round.
+    // Hydrate prefilled names + last mode.
     useEffect(() => {
+        const lastMode = loadLastMode();
+        if (lastMode) setMode(lastMode);
         const last = loadLastNames();
         if (!last) return;
         setPlayerCount(last.count);
@@ -62,15 +151,33 @@ export function Setup({ onStart }: Props) {
         });
     }, []);
 
+    // Coerce playerCount into the bounds for the selected mode.
+    useEffect(() => {
+        const b = playerBounds(mode);
+        if (b.fixed !== null && playerCount !== b.fixed) {
+            setPlayerCount(b.fixed);
+        } else if (playerCount < b.min) {
+            setPlayerCount(b.min);
+        } else if (playerCount > b.max) {
+            setPlayerCount(b.max);
+        }
+    }, [mode, playerCount]);
+
     const visibleNames = names.slice(0, playerCount);
     const duplicates = useMemo(
         () => findDuplicates(visibleNames),
         [visibleNames],
     );
     const hasDuplicates = duplicates.size > 0;
+    const selectedMode =
+        GAME_MODES.find((m) => m.id === mode) ?? GAME_MODES[0];
+    const bounds = playerBounds(mode);
+    const lockMessage = computeLockMessage(selectedMode.label, bounds);
+    const canStart = selectedMode.available;
 
     const submit = () => {
-        onStart(names.slice(0, playerCount));
+        if (!canStart) return;
+        onStart(names.slice(0, playerCount), mode);
     };
 
     const focusRow = (i: number) => {
@@ -94,7 +201,7 @@ export function Setup({ onStart }: Props) {
     };
 
     const addRow = () => {
-        if (playerCount >= MAX_PLAYERS) return;
+        if (playerCount >= bounds.max) return;
         const nextCount = playerCount + 1;
         setPlayerCount(nextCount);
         focusRow(nextCount - 1);
@@ -105,7 +212,7 @@ export function Setup({ onStart }: Props) {
             focusRow(i + 1);
             return;
         }
-        if (playerCount < MAX_PLAYERS) {
+        if (playerCount < bounds.max) {
             addRow();
             return;
         }
@@ -113,19 +220,52 @@ export function Setup({ onStart }: Props) {
     };
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12">
+        <div className="min-h-screen flex flex-col items-center justify-start px-6 py-12">
             <div className="w-full max-w-lg space-y-8">
-                <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-primary font-medium mb-2">
-                        Golf Game
+                <div className="space-y-2">
+                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-medium">
+                        Game
                     </p>
-                    <h1 className="font-clash text-6xl md:text-7xl font-bold text-foreground leading-none">
-                        GAUNTLET
-                    </h1>
-                    <p className="mt-4 text-sm text-muted-foreground leading-relaxed max-w-sm">
-                        Beat your target on a hole and advance to the next player. Work all
-                        the way around and score a point.
-                    </p>
+                    <div
+                        role="radiogroup"
+                        aria-label="Game mode"
+                        className="grid grid-cols-2 gap-2"
+                    >
+                        {GAME_MODES.map((opt) => {
+                            const selected = opt.id === mode;
+                            return (
+                                <button
+                                    key={opt.id}
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={selected}
+                                    onClick={() => {
+                                        setMode(opt.id);
+                                    }}
+                                    className={cn(
+                                        "text-left rounded-md border px-3 py-2.5 transition-colors",
+                                        selected
+                                            ? "border-primary bg-primary/5"
+                                            : "border-border bg-card hover:border-foreground/40",
+                                    )}
+                                >
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className="font-clash text-base font-bold">
+                                            {opt.label}
+                                        </span>
+                                        {!opt.available && (
+                                            <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+                                                Soon
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground leading-snug mt-1">
+                                        {opt.description}
+                                    </p>
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
 
                 <div className="space-y-2">
@@ -139,20 +279,25 @@ export function Setup({ onStart }: Props) {
                     >
                         {PLAYER_COUNT_OPTIONS.map((count) => {
                             const selected = count === playerCount;
+                            const disabled =
+                                count < bounds.min || count > bounds.max;
                             return (
                                 <button
                                     key={count}
                                     type="button"
                                     role="radio"
                                     aria-checked={selected}
+                                    disabled={disabled}
                                     onClick={() => {
-                                        setPlayerCount(count);
+                                        if (!disabled) setPlayerCount(count);
                                     }}
                                     className={cn(
                                         "font-clash text-base font-bold px-4 h-9 rounded-sm transition-colors",
                                         selected
                                             ? "bg-primary text-primary-foreground"
                                             : "text-muted-foreground hover:text-foreground",
+                                        disabled &&
+                                        "opacity-30 cursor-not-allowed hover:text-muted-foreground",
                                     )}
                                 >
                                     {count}
@@ -160,6 +305,11 @@ export function Setup({ onStart }: Props) {
                             );
                         })}
                     </div>
+                    {lockMessage !== null && (
+                        <p className="text-xs text-muted-foreground">
+                            {lockMessage}
+                        </p>
+                    )}
                 </div>
 
                 <div className="space-y-3">
@@ -316,7 +466,7 @@ export function Setup({ onStart }: Props) {
                         );
                     })}
 
-                    {playerCount < MAX_PLAYERS && (
+                    {playerCount < bounds.max && (
                         <Button
                             type="button"
                             variant="ghost"
@@ -342,8 +492,9 @@ export function Setup({ onStart }: Props) {
                 <Button
                     className="w-full h-12 text-base font-semibold tracking-wide"
                     onClick={submit}
+                    disabled={!canStart}
                 >
-                    Start Game
+                    {`Start ${selectedMode.label}`}
                 </Button>
             </div>
         </div>

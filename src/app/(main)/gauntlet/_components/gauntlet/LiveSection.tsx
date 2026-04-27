@@ -1,7 +1,7 @@
 "use client";
 
 import { HoleEntry } from "./HoleEntry";
-import type { HoleScores, Player } from "../_lib/types";
+import type { HoleScores, Player } from "../../_lib/gauntlet/types";
 
 type Props = {
     players: Player[];

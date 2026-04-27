@@ -1,4 +1,12 @@
-import type { HoleScores, Player } from "./types";
+import { GameEngine } from "../base/engine";
+import { gauntletStorage } from "./storage";
+import {
+  GAUNTLET_MAX_PLAYERS,
+  GAUNTLET_MIN_PLAYERS,
+  GAUNTLET_STORAGE_KEY,
+  GAUNTLET_TOTAL_HOLES,
+} from "./types";
+import type { GauntletState, HoleScores, Player } from "./types";
 
 /** Advance a single player's target by one slot, skipping themselves. */
 export function advanceTarget(
@@ -173,3 +181,48 @@ function makeId(seed: number): string {
   }
   return `p-${String(seed)}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
+
+class GauntletEngineImpl extends GameEngine<GauntletState, HoleScores, Player> {
+  readonly mode = "gauntlet" as const;
+  readonly storageKey = GAUNTLET_STORAGE_KEY;
+  readonly totalHoles = GAUNTLET_TOTAL_HOLES;
+  readonly minPlayers = GAUNTLET_MIN_PLAYERS;
+  readonly maxPlayers = GAUNTLET_MAX_PLAYERS;
+
+  createInitialState(names: string[]): GauntletState | null {
+    if (names.length < this.minPlayers) return null;
+    if (names.length > this.maxPlayers) return null;
+    return {
+      mode: "gauntlet",
+      players: makeInitialPlayers(this.trimNames(names)),
+      holes: [],
+    };
+  }
+
+  validateHole(state: GauntletState, hole: HoleScores): boolean {
+    if (!Array.isArray(hole)) return false;
+    if (hole.length !== state.players.length) return false;
+    return hole.every((s) => Number.isInteger(s) && s > 0);
+  }
+
+  applyHole(state: GauntletState, hole: HoleScores): GauntletState {
+    return {
+      ...state,
+      players: applyHole(state.players, hole),
+      holes: [...state.holes, hole],
+    };
+  }
+
+  recompute(state: GauntletState): GauntletState {
+    return {
+      ...state,
+      players: recompute(resetPlayers(state.players), state.holes),
+    };
+  }
+
+  parseState(raw: unknown): GauntletState | null {
+    return gauntletStorage.parse(raw);
+  }
+}
+
+export const gauntletEngine: GauntletEngineImpl = new GauntletEngineImpl();

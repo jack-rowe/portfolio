@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { ArrowRight, Pencil } from "lucide-react";
-import { lapProgress } from "../_lib/engine";
-import type { Player } from "../_lib/types";
+import { lapProgress } from "../../_lib/gauntlet/engine";
+import type { Player } from "../../_lib/gauntlet/types";
 
 type Props = {
     players: Player[];

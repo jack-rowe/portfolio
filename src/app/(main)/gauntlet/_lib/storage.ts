@@ -1,56 +1,12 @@
 import { z } from "zod";
 import {
+  ACTIVE_MODE_KEY,
+  LAST_MODE_KEY,
   LAST_NAMES_KEY,
   MAX_PLAYERS,
   MIN_PLAYERS,
-  STORAGE_KEY,
-  TOTAL_HOLES,
 } from "./types";
-import type { GauntletState } from "./types";
-
-const PlayerSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1),
-  points: z.number().int().nonnegative(),
-  targetIndex: z.number().int().nonnegative(),
-  startTargetIndex: z.number().int().nonnegative(),
-});
-
-const StateSchema = z
-  .object({
-    players: z.array(PlayerSchema).min(MIN_PLAYERS).max(MAX_PLAYERS),
-    holes: z.array(z.array(z.number().int().positive())).max(TOTAL_HOLES),
-    finishedAt: z.number().int().nonnegative().optional(),
-  })
-  .superRefine((data, ctx) => {
-    const playerCount = data.players.length;
-    data.holes.forEach((scores, idx) => {
-      if (scores.length !== playerCount) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["holes", idx],
-          message: `hole ${String(idx)} has ${String(scores.length)} scores, expected ${String(playerCount)}`,
-        });
-      }
-    });
-    for (const p of data.players) {
-      if (p.targetIndex >= playerCount || p.startTargetIndex >= playerCount) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["players"],
-          message: "target index out of range",
-        });
-        break;
-      }
-    }
-    if (data.finishedAt !== undefined && data.finishedAt > data.holes.length) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["finishedAt"],
-        message: "finishedAt exceeds holes played",
-      });
-    }
-  });
+import type { GameMode } from "./types";
 
 const LastNamesSchema = z.object({
   count: z.number().int().min(MIN_PLAYERS).max(MAX_PLAYERS),
@@ -58,36 +14,6 @@ const LastNamesSchema = z.object({
 });
 
 export type LastNames = z.infer<typeof LastNamesSchema>;
-
-export function loadState(): GauntletState | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed: unknown = JSON.parse(raw);
-    const result = StateSchema.safeParse(parsed);
-    if (!result.success) {
-      window.localStorage.removeItem(STORAGE_KEY);
-      return null;
-    }
-    return result.data;
-  } catch {
-    return null;
-  }
-}
-
-export function saveState(state: GauntletState | null): void {
-  if (typeof window === "undefined") return;
-  if (state === null) {
-    window.localStorage.removeItem(STORAGE_KEY);
-    return;
-  }
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch {
-    // Storage full / unavailable — silently ignore; game still works in-memory.
-  }
-}
 
 export function loadLastNames(): LastNames | null {
   if (typeof window === "undefined") return null;
@@ -115,4 +41,61 @@ export function saveLastNames(names: string[]): void {
   } catch {
     // ignore
   }
+}
+
+const ModeSchema = z.union([
+  z.literal("gauntlet"),
+  z.literal("wolf"),
+  z.literal("vegas"),
+  z.literal("hollywood"),
+  z.literal("lcr"),
+  z.literal("matchplay"),
+]);
+
+function readMode(key: string): GameMode | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    const result = ModeSchema.safeParse(parsed);
+    if (!result.success) {
+      window.localStorage.removeItem(key);
+      return null;
+    }
+    return result.data;
+  } catch {
+    return null;
+  }
+}
+
+function writeMode(key: string, mode: GameMode | null): void {
+  if (typeof window === "undefined") return;
+  if (mode === null) {
+    window.localStorage.removeItem(key);
+    return;
+  }
+  try {
+    window.localStorage.setItem(key, JSON.stringify(mode));
+  } catch {
+    // ignore
+  }
+}
+
+/** The mode of the currently active in-progress game, or null if none. */
+export function loadActiveMode(): GameMode | null {
+  return readMode(ACTIVE_MODE_KEY);
+}
+
+export function saveActiveMode(mode: GameMode | null): void {
+  writeMode(ACTIVE_MODE_KEY, mode);
+}
+
+/** The mode the user picked last time, used to default the Setup screen. */
+export function loadLastMode(): GameMode | null {
+  return readMode(LAST_MODE_KEY);
+}
+
+export function saveLastMode(mode: GameMode): void {
+  writeMode(LAST_MODE_KEY, mode);
 }
