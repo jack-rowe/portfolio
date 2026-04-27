@@ -7,7 +7,7 @@ import {
   recompute,
   resetPlayers,
 } from "../_lib/engine";
-import { loadState, saveState } from "../_lib/storage";
+import { loadState, saveLastNames, saveState } from "../_lib/storage";
 import type { GauntletState, HoleScores } from "../_lib/types";
 import { TOTAL_HOLES } from "../_lib/types";
 
@@ -43,6 +43,7 @@ export function useGauntlet(): UseGauntlet {
 
   const startGame = useCallback((names: string[]) => {
     const trimmed = names.map((n, i) => n.trim() || `Player ${String(i + 1)}`);
+    saveLastNames(trimmed);
     setState({ players: makeInitialPlayers(trimmed), holes: [] });
   }, []);
 

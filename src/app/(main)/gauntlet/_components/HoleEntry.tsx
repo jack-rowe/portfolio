@@ -83,15 +83,17 @@ export function HoleEntry({
                 ))}
             </div>
 
-            <div className="flex gap-2">
-                <Button
-                    className="flex-1 h-12 text-base font-semibold tracking-wide"
-                    onClick={submit}
-                    disabled={!canSubmit}
-                    aria-label={`Submit hole ${String(holeNumber)} of ${String(TOTAL_HOLES)}`}
-                >
-                    Submit Hole {holeNumber}
-                </Button>
+            <div className="fixed bottom-0 inset-x-0 z-20 px-4 pt-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] bg-gradient-to-t from-background via-background to-background/80 border-t border-border md:static md:p-0 md:border-0 md:bg-none md:from-transparent md:to-transparent">
+                <div className="max-w-2xl mx-auto md:max-w-none">
+                    <Button
+                        className="w-full h-12 text-base font-semibold tracking-wide"
+                        onClick={submit}
+                        disabled={!canSubmit}
+                        aria-label={`Submit hole ${String(holeNumber)} of ${String(TOTAL_HOLES)}`}
+                    >
+                        Submit Hole {holeNumber}
+                    </Button>
+                </div>
             </div>
         </div>
     );

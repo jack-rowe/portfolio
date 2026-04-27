@@ -77,7 +77,7 @@ export function Scorecard({
                                     aria-label={`Go to hole ${String(h + 1)}`}
                                     aria-current={active ? "true" : undefined}
                                     className={`${COL_WIDTH} shrink-0 py-2 font-clash text-sm font-bold tabular-nums border-r border-border/50 transition-colors ${active
-                                        ? "bg-primary/15 text-primary"
+                                        ? "bg-primary/15 text-primary ring-2 ring-inset ring-primary"
                                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
                                         }`}
                                 >
@@ -126,7 +126,7 @@ export function Scorecard({
                                         )}
                                         aria-current={active ? "true" : undefined}
                                         className={`${COL_WIDTH} shrink-0 relative py-3 border-r border-border/50 transition-colors ${active
-                                            ? "bg-primary/15"
+                                            ? "bg-primary/15 ring-2 ring-inset ring-primary"
                                             : "hover:bg-muted/40"
                                             }`}
                                     >
