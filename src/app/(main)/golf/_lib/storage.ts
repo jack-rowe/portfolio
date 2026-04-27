@@ -50,6 +50,8 @@ const ModeSchema = z.union([
   z.literal("hollywood"),
   z.literal("lcr"),
   z.literal("matchplay"),
+  z.literal("strokeplay"),
+  z.literal("scramble"),
 ]);
 
 function readMode(key: string): GameMode | null {

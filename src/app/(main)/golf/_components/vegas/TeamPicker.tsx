@@ -54,9 +54,11 @@ function TeamColumn({
             <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
                 Team {label}
             </p>
-            <p className="font-clash text-base font-bold leading-tight truncate">
-                {names.join(" + ")}
-            </p>
+            <ul className="font-clash text-base font-bold leading-tight space-y-0.5 break-words">
+                {names.map((name) => (
+                    <li key={name}>{name}</li>
+                ))}
+            </ul>
         </div>
     );
 }

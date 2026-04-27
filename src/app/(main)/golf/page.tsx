@@ -6,13 +6,17 @@ import { GauntletShell } from "./_components/gauntlet/GauntletShell";
 import { HollywoodShell } from "./_components/hollywood/HollywoodShell";
 import { LcrShell } from "./_components/lcr/LcrShell";
 import { MatchplayShell } from "./_components/matchplay/MatchplayShell";
+import { ScrambleShell } from "./_components/scramble/ScrambleShell";
 import { Setup } from "./_components/Setup";
+import { StrokeplayShell } from "./_components/strokeplay/StrokeplayShell";
 import { VegasShell } from "./_components/vegas/VegasShell";
 import { WolfShell } from "./_components/wolf/WolfShell";
 import { useGauntlet } from "./_hooks/use-gauntlet";
 import { useHollywood } from "./_hooks/use-hollywood";
 import { useLcr } from "./_hooks/use-lcr";
 import { useMatchplay } from "./_hooks/use-matchplay";
+import { useScramble } from "./_hooks/use-scramble";
+import { useStrokeplay } from "./_hooks/use-strokeplay";
 import { useVegas } from "./_hooks/use-vegas";
 import { useWolf } from "./_hooks/use-wolf";
 import {
@@ -22,6 +26,10 @@ import {
     saveLastNames,
 } from "./_lib/storage";
 import type { GameMode } from "./_lib/types";
+import type {
+    ScrambleFormat,
+    ScrambleLayout,
+} from "./_lib/scramble/types";
 import { DEFAULT_VEGAS_TEAMS } from "./_lib/vegas/types";
 
 export default function GauntletPage() {
@@ -31,6 +39,8 @@ export default function GauntletPage() {
     const hollywood = useHollywood();
     const lcr = useLcr();
     const matchplay = useMatchplay();
+    const strokeplay = useStrokeplay();
+    const scramble = useScramble();
 
     const [activeMode, setActiveMode] = useState<GameMode | null>(null);
     const [routeReady, setRouteReady] = useState(false);
@@ -41,7 +51,9 @@ export default function GauntletPage() {
         vegas.hydrated &&
         hollywood.hydrated &&
         lcr.hydrated &&
-        matchplay.hydrated;
+        matchplay.hydrated &&
+        strokeplay.hydrated &&
+        scramble.hydrated;
 
     useEffect(() => {
         if (!allHydrated) return;
@@ -53,6 +65,8 @@ export default function GauntletPage() {
             hollywood: !!hollywood.state,
             lcr: !!lcr.state,
             matchplay: !!matchplay.state,
+            strokeplay: !!strokeplay.state,
+            scramble: !!scramble.state,
         };
         if (stored && has[stored]) {
             setActiveMode(stored);
@@ -69,10 +83,20 @@ export default function GauntletPage() {
         hollywood.state,
         lcr.state,
         matchplay.state,
+        strokeplay.state,
+        scramble.state,
     ]);
 
     const handleStart = useCallback(
-        (names: string[], mode: GameMode) => {
+        (
+            names: string[],
+            mode: GameMode,
+            opts?: {
+                handicaps?: number[];
+                scrambleLayout?: ScrambleLayout;
+                scrambleFormat?: ScrambleFormat;
+            },
+        ) => {
             saveLastMode(mode);
             saveLastNames(names);
             saveActiveMode(mode);
@@ -95,10 +119,22 @@ export default function GauntletPage() {
                 case "matchplay":
                     matchplay.startGame(names);
                     break;
+                case "strokeplay":
+                    strokeplay.startGame(
+                        names,
+                        opts?.handicaps ?? names.map(() => 0),
+                    );
+                    break;
+                case "scramble":
+                    scramble.startGame(names, {
+                        layout: opts?.scrambleLayout ?? "2v2",
+                        format: opts?.scrambleFormat ?? "matchplay",
+                    });
+                    break;
             }
             setActiveMode(mode);
         },
-        [gauntlet, wolf, vegas, hollywood, lcr, matchplay],
+        [gauntlet, wolf, vegas, hollywood, lcr, matchplay, strokeplay, scramble],
     );
 
     const handleResetToSetup = useCallback(() => {
@@ -164,6 +200,24 @@ export default function GauntletPage() {
         return (
             <>
                 <MatchplayShell onResetToSetup={handleResetToSetup} />
+                <Toaster />
+            </>
+        );
+    }
+
+    if (activeMode === "strokeplay") {
+        return (
+            <>
+                <StrokeplayShell onResetToSetup={handleResetToSetup} />
+                <Toaster />
+            </>
+        );
+    }
+
+    if (activeMode === "scramble") {
+        return (
+            <>
+                <ScrambleShell onResetToSetup={handleResetToSetup} />
                 <Toaster />
             </>
         );

@@ -1,35 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import { Clapperboard, Flag, RotateCcw } from "lucide-react";
+import { Flag, Goal, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useHollywood } from "../../_hooks/use-hollywood";
-import { segmentScores, SEGMENTS } from "../../_lib/hollywood/engine";
+import { useStrokeplay } from "../../_hooks/use-strokeplay";
 import type {
-    HollywoodHole,
-    HollywoodState,
-} from "../../_lib/hollywood/types";
-import { HOLLYWOOD_TOTAL_HOLES } from "../../_lib/hollywood/types";
+    StrokeplayHole,
+    StrokeplayState,
+} from "../../_lib/strokeplay/types";
+import { STROKEPLAY_TOTAL_HOLES } from "../../_lib/strokeplay/types";
 import { EndRoundDialog } from "../EndRoundDialog";
 import { HoleNavigator } from "../HoleNavigator";
 import { ResetDialog } from "../ResetDialog";
-import { GenericLeaderboard } from "../shared/GenericLeaderboard";
 import { EditHoleDialog } from "./EditHoleDialog";
 import { GameOverBanner } from "./GameOverBanner";
 import { HoleEntry } from "./HoleEntry";
 import { HoleView } from "./HoleView";
+import { Leaderboard } from "./Leaderboard";
 import { Scorecard } from "./Scorecard";
-
-const SEGMENT_LABELS = ["Front 6", "Middle 6", "Back 6"];
 
 type Props = {
     onResetToSetup: () => void;
 };
 
 function computeMaxIndex(
-    state: HollywoodState | null,
+    state: StrokeplayState | null,
     isGameOver: boolean,
 ): number {
     if (!state) return 0;
@@ -46,7 +43,7 @@ function computeNavLabel(
     return "Viewing";
 }
 
-export function HollywoodShell({ onResetToSetup }: Props) {
+export function StrokeplayShell({ onResetToSetup }: Props) {
     const {
         state,
         submitHole,
@@ -56,7 +53,7 @@ export function HollywoodShell({ onResetToSetup }: Props) {
         resetGame,
         isGameOver,
         holeNumber,
-    } = useHollywood();
+    } = useStrokeplay();
 
     const [viewedHole, setViewedHole] = useState(0);
     const [editingHole, setEditingHole] = useState<number | null>(null);
@@ -70,14 +67,13 @@ export function HollywoodShell({ onResetToSetup }: Props) {
 
     if (!state) return null;
 
-    const totalHoles = state.finishedAt ?? HOLLYWOOD_TOTAL_HOLES;
-    const isLiveEntry = !isGameOver && clampedViewedHole === state.holes.length;
+    const totalHoles = state.finishedAt ?? STROKEPLAY_TOTAL_HOLES;
+    const isLiveEntry =
+        !isGameOver && clampedViewedHole === state.holes.length;
     const viewedHoleNumber = clampedViewedHole + 1;
     const canPrev = clampedViewedHole > 0;
     const canNext = clampedViewedHole < maxIndex;
     const navLabel = computeNavLabel(isLiveEntry, isGameOver);
-
-    const segs = segmentScores(state.holes);
 
     const goPrev = () => {
         if (canPrev) setViewedHole(clampedViewedHole - 1);
@@ -86,12 +82,12 @@ export function HollywoodShell({ onResetToSetup }: Props) {
         if (canNext) setViewedHole(clampedViewedHole + 1);
     };
 
-    const handleSubmit = (hole: HollywoodHole) => {
+    const handleSubmit = (hole: StrokeplayHole) => {
         submitHole(hole);
         setViewedHole(clampedViewedHole + 1);
     };
 
-    const handleSaveEdit = (holeIndex: number, hole: HollywoodHole) => {
+    const handleSaveEdit = (holeIndex: number, hole: StrokeplayHole) => {
         editHole(holeIndex, hole);
         toast.success(`Hole ${String(holeIndex + 1)} updated`);
     };
@@ -108,12 +104,9 @@ export function HollywoodShell({ onResetToSetup }: Props) {
         >
             <header className="sticky top-0 z-10 bg-background/90 backdrop-blur border-b border-border py-3 mb-5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <Clapperboard
-                        aria-hidden="true"
-                        className="w-5 h-5 text-primary"
-                    />
+                    <Goal aria-hidden="true" className="w-5 h-5 text-primary" />
                     <span className="font-clash text-2xl font-bold tracking-tight">
-                        HOLLYWOOD
+                        Stroke Play
                     </span>
                 </div>
                 <div className="flex items-center gap-1">
@@ -138,19 +131,16 @@ export function HollywoodShell({ onResetToSetup }: Props) {
                         }}
                         className="text-muted-foreground hover:text-foreground gap-1.5"
                     >
-                        <RotateCcw aria-hidden="true" className="w-3.5 h-3.5" />{" "}
+                        <RotateCcw
+                            aria-hidden="true"
+                            className="w-3.5 h-3.5"
+                        />{" "}
                         New game
                     </Button>
                 </div>
             </header>
 
             <div className="space-y-4">
-                <SegmentSummary
-                    players={state.players}
-                    segs={segs}
-                    holesPlayed={state.holes.length}
-                />
-
                 <HoleNavigator
                     holeNumber={viewedHoleNumber}
                     totalHoles={totalHoles}
@@ -173,7 +163,7 @@ export function HollywoodShell({ onResetToSetup }: Props) {
                         {showGameOverBanner && (
                             <GameOverBanner
                                 players={state.players}
-                                holesPlayed={state.holes.length}
+                                holes={state.holes}
                                 onEditFinalHole={() => {
                                     setEditingHole(state.holes.length - 1);
                                 }}
@@ -190,11 +180,11 @@ export function HollywoodShell({ onResetToSetup }: Props) {
                     </>
                 )}
 
-                <GenericLeaderboard
+                <Leaderboard
                     players={state.players}
+                    holes={state.holes}
                     isGameOver={isGameOver}
                     onRename={renamePlayer}
-                    unitLabel={(p) => (p === 1 ? "hole" : "holes")}
                 />
 
                 <Scorecard
@@ -242,72 +232,9 @@ export function HollywoodShell({ onResetToSetup }: Props) {
                     setViewedHole(0);
                     setResetOpen(false);
                     onResetToSetup();
-                    toast.success("New game started");
+                    toast.success("New round started");
                 }}
             />
-        </div>
-    );
-}
-
-function SegmentSummary({
-    players,
-    segs,
-    holesPlayed,
-}: {
-    players: { name: string }[];
-    segs: ReturnType<typeof segmentScores>;
-    holesPlayed: number;
-}) {
-    return (
-        <div className="rounded-lg border border-border bg-card p-3 space-y-2">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                Partner rotation
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                {SEGMENTS.map((s, idx) => {
-                    const aNames = s.teamA.map((i) => players[i].name);
-                    const bNames = s.teamB.map((i) => players[i].name);
-                    const startHole = idx * 6 + 1;
-                    const endHole = startHole + 5;
-                    const active =
-                        holesPlayed >= startHole - 1 && holesPlayed < endHole;
-                    const seg = segs[idx];
-                    return (
-                        <div
-                            key={`seg-${String(idx)}`}
-                            className={cn(
-                                "rounded-md border px-2 py-2",
-                                active
-                                    ? "border-primary/60 bg-primary/5"
-                                    : "border-border",
-                            )}
-                        >
-                            <p className="text-[9px] uppercase tracking-[0.15em] text-muted-foreground">
-                                {SEGMENT_LABELS[idx]} · {startHole}-{endHole}
-                            </p>
-                            <ul className="font-clash text-xs font-bold leading-tight space-y-0.5 break-words">
-                                {aNames.map((name) => (
-                                    <li key={`a-${name}`}>{name}</li>
-                                ))}
-                            </ul>
-                            <p className="text-[10px] text-muted-foreground my-0.5">
-                                vs
-                            </p>
-                            <ul className="font-clash text-xs font-bold leading-tight space-y-0.5 break-words">
-                                {bNames.map((name) => (
-                                    <li key={`b-${name}`}>{name}</li>
-                                ))}
-                            </ul>
-                            <p className="text-[10px] text-muted-foreground mt-1 tabular-nums">
-                                {seg.teamAWins}–{seg.teamBWins}
-                                {seg.ties > 0
-                                    ? ` (${String(seg.ties)}T)`
-                                    : ""}
-                            </p>
-                        </div>
-                    );
-                })}
-            </div>
         </div>
     );
 }

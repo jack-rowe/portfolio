@@ -1,8 +1,8 @@
 // Cross-cutting constants and types shared across all game modes.
 
-/** Cross-mode bounds. Match Play allows 2 players; other modes enforce
- * stricter mode-specific bounds via their engines. */
-export const MIN_PLAYERS = 2;
+/** Cross-mode bounds. Stroke Play allows 1 player; Match Play 2; other modes
+ * enforce stricter mode-specific bounds via their engines. */
+export const MIN_PLAYERS = 1;
 export const MAX_PLAYERS = 4;
 export const DEFAULT_PLAYER_COUNT = 4;
 
@@ -16,7 +16,9 @@ export type GameMode =
   | "vegas"
   | "hollywood"
   | "lcr"
-  | "matchplay";
+  | "matchplay"
+  | "strokeplay"
+  | "scramble";
 export const DEFAULT_GAME_MODE: GameMode = "gauntlet";
 export const ALL_GAME_MODES: GameMode[] = [
   "gauntlet",
@@ -25,4 +27,6 @@ export const ALL_GAME_MODES: GameMode[] = [
   "hollywood",
   "lcr",
   "matchplay",
+  "strokeplay",
+  "scramble",
 ];

@@ -19,6 +19,18 @@ import {
     MATCHPLAY_MAX_PLAYERS,
     MATCHPLAY_MIN_PLAYERS,
 } from "../_lib/matchplay/types";
+import {
+    STROKEPLAY_MAX_HANDICAP,
+    STROKEPLAY_MAX_PLAYERS,
+    STROKEPLAY_MIN_PLAYERS,
+} from "../_lib/strokeplay/types";
+import {
+    SCRAMBLE_PLAYER_COUNT,
+} from "../_lib/scramble/types";
+import type {
+    ScrambleFormat,
+    ScrambleLayout,
+} from "../_lib/scramble/types";
 import { WOLF_PLAYER_COUNT } from "../_lib/wolf/types";
 
 type PlayerBounds = { min: number; max: number; fixed: number | null };
@@ -32,6 +44,12 @@ function playerBounds(mode: GameMode): PlayerBounds {
     }
     if (mode === "matchplay") {
         return { min: MATCHPLAY_MIN_PLAYERS, max: MATCHPLAY_MAX_PLAYERS, fixed: null };
+    }
+    if (mode === "strokeplay") {
+        return { min: STROKEPLAY_MIN_PLAYERS, max: STROKEPLAY_MAX_PLAYERS, fixed: null };
+    }
+    if (mode === "scramble") {
+        return { min: SCRAMBLE_PLAYER_COUNT, max: SCRAMBLE_PLAYER_COUNT, fixed: SCRAMBLE_PLAYER_COUNT };
     }
     // gauntlet: 3-4
     return { min: 3, max: MAX_PLAYERS, fixed: null };
@@ -47,8 +65,14 @@ function computeLockMessage(
     return `${label} supports ${String(bounds.min)} to ${String(bounds.max)} players.`;
 }
 
+type StartOptions = {
+    handicaps?: number[];
+    scrambleLayout?: ScrambleLayout;
+    scrambleFormat?: ScrambleFormat;
+};
+
 type Props = {
-    onStart: (names: string[], mode: GameMode) => void;
+    onStart: (names: string[], mode: GameMode, opts?: StartOptions) => void;
 };
 
 type GameModeOption = {
@@ -101,6 +125,20 @@ const GAME_MODES: GameModeOption[] = [
             "Lowest score wins the hole. Halves on ties. 2-4 players.",
         available: true,
     },
+    {
+        id: "strokeplay",
+        label: "Stroke Play",
+        description:
+            "Lowest net total wins. Per-player handicap subtracts from gross. 1-4 players.",
+        available: true,
+    },
+    {
+        id: "scramble",
+        label: "Scramble",
+        description:
+            "Best ball per team each hole. 2v2 or 4v0. Match play or stroke play.",
+        available: true,
+    },
 ];
 
 const PLAYER_COUNT_OPTIONS = Array.from(
@@ -110,6 +148,19 @@ const PLAYER_COUNT_OPTIONS = Array.from(
 
 function makeEmptyNames(): string[] {
     return Array.from({ length: MAX_PLAYERS }, () => "");
+}
+
+function makeEmptyHandicaps(): string[] {
+    return Array.from({ length: MAX_PLAYERS }, () => "");
+}
+
+function clampHandicapInput(raw: string): string {
+    const digits = raw.replaceAll(/\D/g, "");
+    if (digits === "") return "";
+    const n = Number.parseInt(digits, 10);
+    if (!Number.isFinite(n) || n < 0) return "0";
+    if (n > STROKEPLAY_MAX_HANDICAP) return String(STROKEPLAY_MAX_HANDICAP);
+    return String(n);
 }
 
 function findDuplicates(names: string[]): Set<string> {
@@ -130,6 +181,11 @@ export function Setup({ onStart }: Props) {
     const [playerCount, setPlayerCount] =
         useState<number>(DEFAULT_PLAYER_COUNT);
     const [names, setNames] = useState<string[]>(makeEmptyNames);
+    const [handicaps, setHandicaps] = useState<string[]>(makeEmptyHandicaps);
+    const [scrambleLayout, setScrambleLayout] =
+        useState<ScrambleLayout>("2v2");
+    const [scrambleFormat, setScrambleFormat] =
+        useState<ScrambleFormat>("matchplay");
     const [dragIdx, setDragIdx] = useState<number | null>(null);
     const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
     const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
@@ -177,7 +233,27 @@ export function Setup({ onStart }: Props) {
 
     const submit = () => {
         if (!canStart) return;
-        onStart(names.slice(0, playerCount), mode);
+        const trimmedNames = names.slice(0, playerCount);
+        if (mode === "strokeplay") {
+            const hcps = handicaps
+                .slice(0, playerCount)
+                .map((h) => {
+                    const n = Number.parseInt(h, 10);
+                    return Number.isFinite(n) && n >= 0 ? n : 0;
+                });
+            onStart(trimmedNames, mode, { handicaps: hcps });
+            return;
+        }
+        if (mode === "scramble") {
+            const fmt: ScrambleFormat =
+                scrambleLayout === "4v0" ? "strokeplay" : scrambleFormat;
+            onStart(trimmedNames, mode, {
+                scrambleLayout,
+                scrambleFormat: fmt,
+            });
+            return;
+        }
+        onStart(trimmedNames, mode);
     };
 
     const focusRow = (i: number) => {
@@ -193,6 +269,12 @@ export function Setup({ onStart }: Props) {
         if (from < 0 || to < 0) return;
         if (from >= MAX_PLAYERS || to >= MAX_PLAYERS) return;
         setNames((prev) => {
+            const next = [...prev];
+            const [moved] = next.splice(from, 1);
+            next.splice(to, 0, moved);
+            return next;
+        });
+        setHandicaps((prev) => {
             const next = [...prev];
             const [moved] = next.splice(from, 1);
             next.splice(to, 0, moved);
@@ -312,6 +394,134 @@ export function Setup({ onStart }: Props) {
                     )}
                 </div>
 
+                {mode === "scramble" && (
+                    <div className="space-y-3">
+                        <div className="space-y-2">
+                            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-medium">
+                                Layout
+                            </p>
+                            <div
+                                role="radiogroup"
+                                aria-label="Scramble layout"
+                                className="grid grid-cols-2 gap-2"
+                            >
+                                {(
+                                    [
+                                        {
+                                            id: "2v2" as ScrambleLayout,
+                                            label: "2 vs 2",
+                                            desc: "Two teams of 2",
+                                        },
+                                        {
+                                            id: "4v0" as ScrambleLayout,
+                                            label: "4 vs 0",
+                                            desc: "All four on one team",
+                                        },
+                                    ]
+                                ).map((opt) => {
+                                    const selected = scrambleLayout === opt.id;
+                                    return (
+                                        <button
+                                            key={opt.id}
+                                            type="button"
+                                            role="radio"
+                                            aria-checked={selected}
+                                            onClick={() => {
+                                                setScrambleLayout(opt.id);
+                                            }}
+                                            className={cn(
+                                                "text-left rounded-md border px-3 py-2.5 transition-colors",
+                                                selected
+                                                    ? "border-primary bg-primary/5"
+                                                    : "border-border bg-card hover:border-foreground/40",
+                                            )}
+                                        >
+                                            <span className="font-clash text-base font-bold block">
+                                                {opt.label}
+                                            </span>
+                                            <span className="text-xs text-muted-foreground leading-snug">
+                                                {opt.desc}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            {scrambleLayout === "2v2" && (
+                                <p className="text-xs text-muted-foreground">
+                                    Players 1 &amp; 2 form Team A; 3 &amp; 4 form Team B. Drag to rearrange.
+                                </p>
+                            )}
+                        </div>
+                        <div className="space-y-2">
+                            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-medium">
+                                Format
+                            </p>
+                            <div
+                                role="radiogroup"
+                                aria-label="Scramble format"
+                                className="grid grid-cols-2 gap-2"
+                            >
+                                {(
+                                    [
+                                        {
+                                            id: "matchplay" as ScrambleFormat,
+                                            label: "Match",
+                                            desc: "Lowest team score wins the hole",
+                                        },
+                                        {
+                                            id: "strokeplay" as ScrambleFormat,
+                                            label: "Stroke",
+                                            desc: "Lowest team total wins",
+                                        },
+                                    ]
+                                ).map((opt) => {
+                                    const disabled =
+                                        scrambleLayout === "4v0" &&
+                                        opt.id === "matchplay";
+                                    const effective: ScrambleFormat =
+                                        scrambleLayout === "4v0"
+                                            ? "strokeplay"
+                                            : scrambleFormat;
+                                    const selected = effective === opt.id;
+                                    return (
+                                        <button
+                                            key={opt.id}
+                                            type="button"
+                                            role="radio"
+                                            aria-checked={selected}
+                                            disabled={disabled}
+                                            onClick={() => {
+                                                if (!disabled)
+                                                    setScrambleFormat(opt.id);
+                                            }}
+                                            className={cn(
+                                                "text-left rounded-md border px-3 py-2.5 transition-colors",
+                                                selected
+                                                    ? "border-primary bg-primary/5"
+                                                    : "border-border bg-card hover:border-foreground/40",
+                                                disabled &&
+                                                "opacity-40 cursor-not-allowed hover:border-border",
+                                            )}
+                                        >
+                                            <span className="font-clash text-base font-bold block">
+                                                {opt.label}
+                                            </span>
+                                            <span className="text-xs text-muted-foreground leading-snug">
+                                                {opt.desc}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            {scrambleLayout === "4v0" && (
+                                <p className="text-xs text-muted-foreground">
+                                    4v0 uses stroke play (no opposing team).
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 <div className="space-y-3">
                     {visibleNames.map((n, i) => {
                         const id = `${baseId}-name-${String(i)}`;
@@ -430,6 +640,32 @@ export function Setup({ onStart }: Props) {
                                         }}
                                     />
                                 </div>
+                                {mode === "strokeplay" && (
+                                    <div className="w-16 shrink-0">
+                                        <Label
+                                            htmlFor={`${id}-hcp`}
+                                            className="sr-only"
+                                        >
+                                            Player {i + 1} handicap
+                                        </Label>
+                                        <Input
+                                            id={`${id}-hcp`}
+                                            inputMode="numeric"
+                                            pattern="[0-9]*"
+                                            autoComplete="off"
+                                            placeholder="Hcp"
+                                            value={handicaps[i] ?? ""}
+                                            className="h-12 text-base text-center font-clash font-bold tabular-nums bg-card border-border focus-visible:ring-primary"
+                                            onChange={(e) => {
+                                                const next = [...handicaps];
+                                                next[i] = clampHandicapInput(
+                                                    e.target.value,
+                                                );
+                                                setHandicaps(next);
+                                            }}
+                                        />
+                                    </div>
+                                )}
                                 <div className="flex flex-col gap-0.5">
                                     <button
                                         type="button"

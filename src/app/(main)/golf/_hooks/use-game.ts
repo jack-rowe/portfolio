@@ -39,22 +39,22 @@ export function useGame<
   engine: GameEngine<TState, THole, TPlayer, TStartOptions>,
 ): UseGame<TState, THole, TPlayer, TStartOptions> {
   const [hydrated, setHydrated] = useState(false);
-  const [state, setStateInternal] = useState<TState | null>(null);
+  const [stateInternal, setStateInternal] = useState<TState | null>(null);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
+    if (globalThis.window === undefined) {
       setHydrated(true);
       return;
     }
     try {
-      const raw = window.localStorage.getItem(engine.storageKey);
+      const raw = globalThis.window.localStorage.getItem(engine.storageKey);
       if (raw) {
         const parsed: unknown = JSON.parse(raw);
         const valid = engine.parseState(parsed);
         if (valid) {
           setStateInternal(valid);
         } else {
-          window.localStorage.removeItem(engine.storageKey);
+          globalThis.window.localStorage.removeItem(engine.storageKey);
         }
       }
     } catch {
@@ -65,17 +65,20 @@ export function useGame<
 
   useEffect(() => {
     if (!hydrated) return;
-    if (typeof window === "undefined") return;
-    if (state === null) {
-      window.localStorage.removeItem(engine.storageKey);
+    if (globalThis.window === undefined) return;
+    if (stateInternal === null) {
+      globalThis.window.localStorage.removeItem(engine.storageKey);
       return;
     }
     try {
-      window.localStorage.setItem(engine.storageKey, JSON.stringify(state));
+      globalThis.window.localStorage.setItem(
+        engine.storageKey,
+        JSON.stringify(stateInternal),
+      );
     } catch {
       // ignore
     }
-  }, [state, hydrated, engine]);
+  }, [stateInternal, hydrated, engine]);
 
   const setState = useCallback((next: TState | null) => {
     setStateInternal(next);
@@ -91,7 +94,10 @@ export function useGame<
         // commit can read the state from localStorage in their own hydration
         // effects (child effects run before parent effects in React).
         try {
-          window.localStorage.setItem(engine.storageKey, JSON.stringify(next));
+          globalThis.window.localStorage.setItem(
+            engine.storageKey,
+            JSON.stringify(next),
+          );
         } catch {
           // ignore
         }
@@ -152,7 +158,7 @@ export function useGame<
 
   return {
     hydrated,
-    state,
+    state: stateInternal,
     setState,
     startGame,
     submitHole,
@@ -161,7 +167,7 @@ export function useGame<
     endRound,
     renamePlayer,
     resetGame,
-    isGameOver: engine.isGameOver(state),
-    holeNumber: engine.holeNumber(state),
+    isGameOver: engine.isGameOver(stateInternal),
+    holeNumber: engine.holeNumber(stateInternal),
   };
 }

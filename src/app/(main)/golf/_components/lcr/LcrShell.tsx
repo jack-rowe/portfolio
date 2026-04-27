@@ -131,16 +131,6 @@ export function LcrShell({ onResetToSetup }: Props) {
             </header>
 
             <div className="space-y-4">
-                {!isGameOver && isLiveEntry && (
-                    <div className="rounded-lg border border-border bg-card p-3 text-center">
-                        <p className="text-[11px] text-muted-foreground">
-                            Pick the Center based on tee-shot location.
-                            <br />
-                            Center wins solo: +2. Outside best ball wins: +1 each.
-                        </p>
-                    </div>
-                )}
-
                 <HoleNavigator
                     holeNumber={viewedHoleNumber}
                     totalHoles={totalHoles}
