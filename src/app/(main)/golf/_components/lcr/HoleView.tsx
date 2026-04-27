@@ -11,7 +11,7 @@ type Props = {
     players: LcrPlayer[];
     holeIndex: number;
     hole: LcrHole;
-    onEdit: () => void;
+    onEdit?: () => void;
     handicap?: LcrState["handicap"];
 };
 
@@ -58,14 +58,16 @@ export function HoleView({ players, holeIndex, hole, onEdit, handicap }: Props) 
             >
                 {banner}
             </p>
-            <Button
-                variant="ghost"
-                size="sm"
-                className="w-full gap-1.5 text-muted-foreground hover:text-foreground"
-                onClick={onEdit}
-            >
-                <Pencil aria-hidden="true" className="w-3.5 h-3.5" /> Edit hole
-            </Button>
+            {onEdit && (
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full gap-1.5 text-muted-foreground hover:text-foreground"
+                    onClick={onEdit}
+                >
+                    <Pencil aria-hidden="true" className="w-3.5 h-3.5" /> Edit hole
+                </Button>
+            )}
         </div>
     );
 }

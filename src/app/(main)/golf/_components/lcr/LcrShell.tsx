@@ -17,6 +17,7 @@ import { GameOverBanner } from "./GameOverBanner";
 import { HoleEntry } from "./HoleEntry";
 import { HoleView } from "./HoleView";
 import { Scorecard } from "./Scorecard";
+import { ShareButton } from "../shared/ShareButton";
 
 type Props = {
     onResetToSetup: () => void;
@@ -116,6 +117,7 @@ export function LcrShell({ onResetToSetup }: Props) {
                             End round
                         </Button>
                     )}
+                    {isGameOver && <ShareButton state={state} />}
                     <Button
                         variant="ghost"
                         size="sm"

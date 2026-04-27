@@ -8,7 +8,7 @@ import type { Player } from "../../_lib/gauntlet/types";
 type Props = {
     players: Player[];
     holesPlayed: number;
-    onEditFinalHole: () => void;
+    onEditFinalHole?: () => void;
 };
 
 export function GameOverBanner({ players, holesPlayed, onEditFinalHole }: Props) {
@@ -38,14 +38,16 @@ export function GameOverBanner({ players, holesPlayed, onEditFinalHole }: Props)
                     Tiebreaker: {winner.beaten}/{winner.lapLength} on lap progress
                 </p>
             )}
-            <Button
-                variant="outline"
-                size="sm"
-                className="mt-4 gap-1.5"
-                onClick={onEditFinalHole}
-            >
-                <Pencil aria-hidden="true" className="w-3.5 h-3.5" /> Edit Final Hole
-            </Button>
+            {onEditFinalHole && (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-4 gap-1.5"
+                    onClick={onEditFinalHole}
+                >
+                    <Pencil aria-hidden="true" className="w-3.5 h-3.5" /> Edit Final Hole
+                </Button>
+            )}
         </div>
     );
 }

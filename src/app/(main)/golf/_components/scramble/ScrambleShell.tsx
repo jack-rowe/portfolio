@@ -20,6 +20,7 @@ import { HoleEntry } from "./HoleEntry";
 import { HoleView } from "./HoleView";
 import { Leaderboard } from "./Leaderboard";
 import { Scorecard } from "./Scorecard";
+import { ShareButton } from "../shared/ShareButton";
 
 type Props = {
     onResetToSetup: () => void;
@@ -135,6 +136,7 @@ export function ScrambleShell({ onResetToSetup }: Props) {
                             End round
                         </Button>
                     )}
+                    {isGameOver && <ShareButton state={state} />}
                     <Button
                         variant="ghost"
                         size="sm"

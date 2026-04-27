@@ -14,7 +14,7 @@ type Props = {
     scores: HoleScores;
     /** Net scores used for the beat-target comparison (gross when no handicap). */
     netScores: number[];
-    onEdit: () => void;
+    onEdit?: () => void;
 };
 
 export function HoleView({
@@ -102,17 +102,19 @@ export function HoleView({
                 })}
             </div>
 
-            <Button
-                variant="outline"
-                className="w-full h-12 gap-2"
-                onClick={onEdit}
-                aria-label={`Edit hole ${String(holeNumber)} scores`}
-            >
-                <Pencil aria-hidden="true" className="w-4 h-4" />
-                <span className="text-sm font-semibold">
-                    Edit hole {holeNumber}
-                </span>
-            </Button>
+            {onEdit && (
+                <Button
+                    variant="outline"
+                    className="w-full h-12 gap-2"
+                    onClick={onEdit}
+                    aria-label={`Edit hole ${String(holeNumber)} scores`}
+                >
+                    <Pencil aria-hidden="true" className="w-4 h-4" />
+                    <span className="text-sm font-semibold">
+                        Edit hole {holeNumber}
+                    </span>
+                </Button>
+            )}
         </div>
     );
 }

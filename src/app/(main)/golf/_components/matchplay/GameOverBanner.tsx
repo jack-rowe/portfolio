@@ -8,7 +8,7 @@ import type { MatchplayPlayer } from "../../_lib/matchplay/types";
 type Props = {
     players: MatchplayPlayer[];
     holesPlayed: number;
-    onEditFinalHole: () => void;
+    onEditFinalHole?: () => void;
 };
 
 export function GameOverBanner({
@@ -35,14 +35,16 @@ export function GameOverBanner({
                 {winner.points} hole{winner.points === 1 ? "" : "s"} won over{" "}
                 {holesPlayed} played
             </p>
-            <Button
-                variant="outline"
-                size="sm"
-                className="mt-4 gap-1.5"
-                onClick={onEditFinalHole}
-            >
-                <Pencil aria-hidden="true" className="w-3.5 h-3.5" /> Edit Final Hole
-            </Button>
+            {onEditFinalHole && (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-4 gap-1.5"
+                    onClick={onEditFinalHole}
+                >
+                    <Pencil aria-hidden="true" className="w-3.5 h-3.5" /> Edit Final Hole
+                </Button>
+            )}
         </div>
     );
 }

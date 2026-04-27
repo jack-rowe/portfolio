@@ -8,7 +8,7 @@ import { TEAM_LABELS } from "../../_lib/scramble/types";
 
 type Props = {
     state: ScrambleState;
-    onEditFinalHole: () => void;
+    onEditFinalHole?: () => void;
 };
 
 export function GameOverBanner({ state, onEditFinalHole }: Props) {
@@ -56,15 +56,17 @@ export function GameOverBanner({ state, onEditFinalHole }: Props) {
             <p className="text-sm text-muted-foreground tabular-nums">
                 {subtitle}
             </p>
-            <Button
-                variant="outline"
-                size="sm"
-                className="mt-4 gap-1.5"
-                onClick={onEditFinalHole}
-            >
-                <Pencil aria-hidden="true" className="w-3.5 h-3.5" /> Edit Final
-                Hole
-            </Button>
+            {onEditFinalHole && (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-4 gap-1.5"
+                    onClick={onEditFinalHole}
+                >
+                    <Pencil aria-hidden="true" className="w-3.5 h-3.5" /> Edit Final
+                    Hole
+                </Button>
+            )}
         </div>
     );
 }

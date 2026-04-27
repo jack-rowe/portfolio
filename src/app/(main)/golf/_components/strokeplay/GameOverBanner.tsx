@@ -12,7 +12,7 @@ import type {
 type Props = {
     players: StrokeplayPlayer[];
     holes: StrokeplayHole[];
-    onEditFinalHole: () => void;
+    onEditFinalHole?: () => void;
     course?: CourseInfo | null;
 };
 
@@ -39,15 +39,17 @@ export function GameOverBanner({ players, holes, onEditFinalHole, course = null 
                 Net {winnerSplit.net} · Gross {winnerSplit.total} · Hcp{" "}
                 {winner.handicap}
             </p>
-            <Button
-                variant="outline"
-                size="sm"
-                className="mt-4 gap-1.5"
-                onClick={onEditFinalHole}
-            >
-                <Pencil aria-hidden="true" className="w-3.5 h-3.5" /> Edit Final
-                Hole
-            </Button>
+            {onEditFinalHole && (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-4 gap-1.5"
+                    onClick={onEditFinalHole}
+                >
+                    <Pencil aria-hidden="true" className="w-3.5 h-3.5" /> Edit Final
+                    Hole
+                </Button>
+            )}
         </div>
     );
 }

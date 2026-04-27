@@ -19,6 +19,7 @@ import { LiveSection } from "./LiveSection";
 import { RecapSection } from "./RecapSection";
 import { ResetDialog } from "../ResetDialog";
 import { Scorecard } from "./Scorecard";
+import { ShareButton } from "../shared/ShareButton";
 
 type Props = {
     onResetToSetup: () => void;
@@ -150,6 +151,7 @@ export function GauntletShell({ onResetToSetup }: Props) {
                             End round
                         </Button>
                     )}
+                    {isGameOver && <ShareButton state={state} />}
                     <Button
                         variant="ghost"
                         size="sm"

@@ -16,7 +16,7 @@ type Props = {
     players: ScramblePlayer[];
     holeIndex: number;
     hole: ScrambleHole;
-    onEdit: () => void;
+    onEdit?: () => void;
 };
 
 export function HoleView({ state, players, holeIndex, hole, onEdit }: Props) {
@@ -94,14 +94,16 @@ export function HoleView({ state, players, holeIndex, hole, onEdit }: Props) {
             >
                 {banner}
             </p>
-            <Button
-                variant="ghost"
-                size="sm"
-                className="w-full gap-1.5 text-muted-foreground hover:text-foreground"
-                onClick={onEdit}
-            >
-                <Pencil aria-hidden="true" className="w-3.5 h-3.5" /> Edit hole
-            </Button>
+            {onEdit && (
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full gap-1.5 text-muted-foreground hover:text-foreground"
+                    onClick={onEdit}
+                >
+                    <Pencil aria-hidden="true" className="w-3.5 h-3.5" /> Edit hole
+                </Button>
+            )}
         </div>
     );
 }

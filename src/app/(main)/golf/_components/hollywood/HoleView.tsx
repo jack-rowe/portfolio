@@ -17,7 +17,7 @@ type Props = {
     players: HollywoodPlayer[];
     holeIndex: number;
     hole: HollywoodHole;
-    onEdit: () => void;
+    onEdit?: () => void;
     handicap?: HollywoodState["handicap"];
 };
 
@@ -59,14 +59,16 @@ export function HoleView({ players, holeIndex, hole, onEdit, handicap }: Props) 
             >
                 {winnerLabel}
             </p>
-            <Button
-                variant="ghost"
-                size="sm"
-                className="w-full gap-1.5 text-muted-foreground hover:text-foreground"
-                onClick={onEdit}
-            >
-                <Pencil aria-hidden="true" className="w-3.5 h-3.5" /> Edit hole
-            </Button>
+            {onEdit && (
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full gap-1.5 text-muted-foreground hover:text-foreground"
+                    onClick={onEdit}
+                >
+                    <Pencil aria-hidden="true" className="w-3.5 h-3.5" /> Edit hole
+                </Button>
+            )}
         </div>
     );
 }

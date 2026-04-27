@@ -13,7 +13,7 @@ import type {
 type Props = {
     players: StablefordPlayer[];
     holes: StablefordHole[];
-    onEditFinalHole: () => void;
+    onEditFinalHole?: () => void;
     handicap?: StablefordState["handicap"];
     course: CourseInfo;
 };
@@ -47,15 +47,17 @@ export function GameOverBanner({
                 {winnerSplit.totalPoints} pts · Gross {winnerSplit.grossTotal} ·
                 Hcp {winner.handicap}
             </p>
-            <Button
-                variant="outline"
-                size="sm"
-                className="mt-4 gap-1.5"
-                onClick={onEditFinalHole}
-            >
-                <Pencil aria-hidden="true" className="w-3.5 h-3.5" /> Edit Final
-                Hole
-            </Button>
+            {onEditFinalHole && (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-4 gap-1.5"
+                    onClick={onEditFinalHole}
+                >
+                    <Pencil aria-hidden="true" className="w-3.5 h-3.5" /> Edit Final
+                    Hole
+                </Button>
+            )}
         </div>
     );
 }

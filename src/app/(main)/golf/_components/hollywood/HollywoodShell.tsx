@@ -22,6 +22,7 @@ import { GameOverBanner } from "./GameOverBanner";
 import { HoleEntry } from "./HoleEntry";
 import { HoleView } from "./HoleView";
 import { Scorecard } from "./Scorecard";
+import { ShareButton } from "../shared/ShareButton";
 
 const SEGMENT_LABELS = ["Front 6", "Middle 6", "Back 6"];
 
@@ -134,6 +135,7 @@ export function HollywoodShell({ onResetToSetup }: Props) {
                             End round
                         </Button>
                     )}
+                    {isGameOver && <ShareButton state={state} />}
                     <Button
                         variant="ghost"
                         size="sm"
