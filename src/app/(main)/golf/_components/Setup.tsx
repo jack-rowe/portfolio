@@ -227,11 +227,16 @@ export function Setup({ onStart }: Props) {
     }, [mode, playerCount]);
 
     // "strokes" mode requires a course (for stroke index data).
+    // "gross" mode (whole-round deduction) only applies to strokeplay.
     useEffect(() => {
-        if (handicapMode === "strokes" && courseId === null) {
-            setHandicapMode("gross");
+        if (handicapMode === "gross" && mode !== "strokeplay") {
+            setHandicapMode("none");
+            return;
         }
-    }, [handicapMode, courseId]);
+        if (handicapMode === "strokes" && courseId === null) {
+            setHandicapMode(mode === "strokeplay" ? "gross" : "none");
+        }
+    }, [handicapMode, courseId, mode]);
 
     const visibleNames = names.slice(0, playerCount);
     const duplicates = useMemo(
@@ -481,7 +486,12 @@ export function Setup({ onStart }: Props) {
                             <div
                                 role="radiogroup"
                                 aria-label="Handicap mode"
-                                className="grid grid-cols-3 gap-2"
+                                className={cn(
+                                    "grid gap-2",
+                                    mode === "strokeplay"
+                                        ? "grid-cols-3"
+                                        : "grid-cols-2",
+                                )}
                             >
                                 {(
                                     [
@@ -490,11 +500,15 @@ export function Setup({ onStart }: Props) {
                                             label: "None",
                                             desc: "Gross only",
                                         },
-                                        {
-                                            id: "gross" as HandicapMode,
-                                            label: "Gross",
-                                            desc: "Subtract from total",
-                                        },
+                                        ...(mode === "strokeplay"
+                                            ? [
+                                                  {
+                                                      id: "gross" as HandicapMode,
+                                                      label: "Gross",
+                                                      desc: "Subtract from total",
+                                                  },
+                                              ]
+                                            : []),
                                         {
                                             id: "strokes" as HandicapMode,
                                             label: "Strokes",
