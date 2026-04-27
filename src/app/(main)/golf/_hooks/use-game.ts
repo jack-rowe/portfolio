@@ -86,7 +86,17 @@ export function useGame<
       if (names.length < engine.minPlayers) return;
       if (names.length > engine.maxPlayers) return;
       const next = engine.createInitialState(names, options);
-      if (next) setStateInternal(next);
+      if (next) {
+        // Write synchronously so shell components that mount in the same
+        // commit can read the state from localStorage in their own hydration
+        // effects (child effects run before parent effects in React).
+        try {
+          window.localStorage.setItem(engine.storageKey, JSON.stringify(next));
+        } catch {
+          // ignore
+        }
+        setStateInternal(next);
+      }
     },
     [engine],
   );
