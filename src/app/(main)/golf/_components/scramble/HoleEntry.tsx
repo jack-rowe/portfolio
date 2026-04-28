@@ -10,6 +10,9 @@ import {
     bumpScoreString,
     clampScoreInput,
 } from "../shared/ScoreInputRow";
+import { getCourse } from "../../_lib/courseData";
+import { teamStrokesOnHole } from "../../_lib/handicap";
+import type { HandicapConfig } from "../../_lib/handicap";
 import type {
     ScrambleHole,
     ScramblePlayer,
@@ -24,6 +27,7 @@ type Props = {
     onSubmit: (hole: ScrambleHole) => void;
     inline?: boolean;
     submitLabel?: string;
+    handicap?: HandicapConfig;
 };
 
 export function HoleEntry({
@@ -34,7 +38,10 @@ export function HoleEntry({
     onSubmit,
     inline = false,
     submitLabel,
+    handicap,
 }: Props) {
+    const holeIndex = holeNumber - 1;
+    const course = getCourse(handicap?.courseId);
     const [scores, setScores] = useState<string[]>(() =>
         teams.map((_, i) =>
             initialScores?.[i] === undefined ? "" : String(initialScores[i]),
@@ -109,9 +116,28 @@ export function HoleEntry({
                                     <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
                                         {teamName}
                                     </p>
-                                    <p className="font-clash text-base font-bold text-foreground break-words">
-                                        {memberNames.join(" + ")}
-                                    </p>
+                                    <div className="flex items-center gap-2">
+                                        <p className="font-clash text-base font-bold text-foreground break-words">
+                                            {memberNames.join(" + ")}
+                                        </p>
+                                        {(() => {
+                                            const dots = teamStrokesOnHole(team, holeIndex, handicap, course);
+                                            return dots > 0 ? (
+                                                <span
+                                                    className="flex items-center gap-0.5 shrink-0"
+                                                    aria-label={`${String(dots)} handicap stroke${dots > 1 ? "s" : ""}`}
+                                                >
+                                                    {Array.from({ length: dots }, (_, k) => (
+                                                        <span
+                                                            key={k}
+                                                            aria-hidden="true"
+                                                            className="w-1.5 h-1.5 rounded-full bg-primary"
+                                                        />
+                                                    ))}
+                                                </span>
+                                            ) : null;
+                                        })()}
+                                    </div>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">

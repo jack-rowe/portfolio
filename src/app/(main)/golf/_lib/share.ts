@@ -127,7 +127,7 @@ export function decodeShare(blob: string): DecodedShare | null {
 }
 
 export function buildShareUrl(origin: string, state: ShareableState): string {
-  return `${origin}/golf/share?d=${encodeShare(state)}`;
+  return `${origin}/golf/share/${encodeShare(state)}`;
 }
 
 /** Mode display metadata used by share UI. Keep in sync with each Shell header. */

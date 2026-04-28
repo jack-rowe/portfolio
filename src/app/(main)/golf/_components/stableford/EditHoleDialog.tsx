@@ -8,6 +8,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { HoleEntry } from "./HoleEntry";
+import type { HandicapConfig } from "../../_lib/handicap";
 import type {
     StablefordHole,
     StablefordPlayer,
@@ -20,6 +21,7 @@ type Props = {
     players: StablefordPlayer[];
     initialHole: StablefordHole | null;
     onSave: (holeIndex: number, hole: StablefordHole) => void;
+    handicap?: HandicapConfig;
 };
 
 export function EditHoleDialog({
@@ -29,6 +31,7 @@ export function EditHoleDialog({
     players,
     initialHole,
     onSave,
+    handicap,
 }: Props) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -47,6 +50,7 @@ export function EditHoleDialog({
                         players={players}
                         holeNumber={holeIndex + 1}
                         initialScores={initialHole.scores}
+                        handicap={handicap}
                         onSubmit={(hole) => {
                             onSave(holeIndex, hole);
                             onOpenChange(false);

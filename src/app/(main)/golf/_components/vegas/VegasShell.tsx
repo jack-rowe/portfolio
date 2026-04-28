@@ -157,6 +157,7 @@ export function VegasShell({ onResetToSetup }: Props) {
                         players={state.players}
                         teams={state.teams}
                         holeNumber={holeNumber}
+                        handicap={state.handicap}
                         onSubmit={handleSubmit}
                     />
                 ) : (
@@ -213,6 +214,7 @@ export function VegasShell({ onResetToSetup }: Props) {
                         : (state.holes[editingHole] ?? null)
                 }
                 onSave={handleSaveEdit}
+                handicap={state.handicap}
             />
 
             <EndRoundDialog

@@ -7,6 +7,9 @@ import {
     clampScoreInput,
     ScoreInputRow,
 } from "../shared/ScoreInputRow";
+import { getCourse } from "../../_lib/courseData";
+import { playerStrokesOnHole } from "../../_lib/handicap";
+import type { HandicapConfig } from "../../_lib/handicap";
 import type { VegasHole, VegasPlayer, VegasTeams } from "../../_lib/vegas/types";
 import { VEGAS_TOTAL_HOLES } from "../../_lib/vegas/types";
 
@@ -18,6 +21,7 @@ type Props = {
     onSubmit: (hole: VegasHole) => void;
     inline?: boolean;
     submitLabel?: string;
+    handicap?: HandicapConfig;
 };
 
 function teamLabel(teams: VegasTeams, idx: number): "A" | "B" {
@@ -32,7 +36,10 @@ export function HoleEntry({
     onSubmit,
     inline = false,
     submitLabel,
+    handicap,
 }: Props) {
+    const holeIndex = holeNumber - 1;
+    const course = getCourse(handicap?.courseId);
     const [scores, setScores] = useState<string[]>(() =>
         players.map((_, i) =>
             initialScores?.[i] === undefined ? "" : String(initialScores[i]),
@@ -96,6 +103,7 @@ export function HoleEntry({
                                     Team {t}
                                 </span>
                             }
+                            strokeDots={playerStrokesOnHole(i, holeIndex, handicap, course)}
                             value={scores[i]}
                             onChange={(v) => {
                                 setVal(i, v);

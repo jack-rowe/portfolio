@@ -12,6 +12,7 @@ import type {
     ScrambleHole,
     ScramblePlayer,
 } from "../../_lib/scramble/types";
+import type { HandicapConfig } from "../../_lib/handicap";
 
 type Props = {
     open: boolean;
@@ -21,6 +22,7 @@ type Props = {
     teams: number[][];
     initialHole: ScrambleHole | null;
     onSave: (holeIndex: number, hole: ScrambleHole) => void;
+    handicap?: HandicapConfig;
 };
 
 export function EditHoleDialog({
@@ -31,6 +33,7 @@ export function EditHoleDialog({
     teams,
     initialHole,
     onSave,
+    handicap,
 }: Props) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -50,6 +53,7 @@ export function EditHoleDialog({
                         teams={teams}
                         holeNumber={holeIndex + 1}
                         initialScores={initialHole.teamScores}
+                        handicap={handicap}
                         onSubmit={(hole) => {
                             onSave(holeIndex, hole);
                             onOpenChange(false);

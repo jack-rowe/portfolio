@@ -161,6 +161,7 @@ export function StrokeplayShell({ onResetToSetup }: Props) {
                         key={`live-${String(state.holes.length)}`}
                         players={state.players}
                         holeNumber={holeNumber}
+                        handicap={state.handicap}
                         onSubmit={handleSubmit}
                     />
                 ) : (
@@ -218,6 +219,7 @@ export function StrokeplayShell({ onResetToSetup }: Props) {
                         : (state.holes[editingHole] ?? null)
                 }
                 onSave={handleSaveEdit}
+                handicap={state.handicap}
             />
 
             <EndRoundDialog

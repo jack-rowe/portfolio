@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { getCourse } from "../../_lib/courseData";
+import { playerStrokesOnHole } from "../../_lib/handicap";
+import type { HandicapConfig } from "../../_lib/handicap";
 import { wolfFor } from "../../_lib/wolf/engine";
 import type { WolfDecision, WolfHole, WolfPlayer } from "../../_lib/wolf/types";
 import { WOLF_TOTAL_HOLES } from "../../_lib/wolf/types";
@@ -22,6 +25,7 @@ type Props = {
     /** When true the submit bar stays inline (used inside Edit dialog). */
     inline?: boolean;
     submitLabel?: string;
+    handicap?: HandicapConfig;
 };
 
 type DecisionMode = "partner" | "lone" | "blind";
@@ -43,9 +47,12 @@ export function HoleEntry({
     onSubmit,
     inline = false,
     submitLabel,
+    handicap,
 }: Props) {
     const wolfIdx = wolfFor(holeNumber - 1, players.length);
     const wolf = players[wolfIdx];
+    const holeIndex = holeNumber - 1;
+    const course = getCourse(handicap?.courseId);
 
     const [scores, setScores] = useState<string[]>(() =>
         players.map((_, i) =>
@@ -130,6 +137,7 @@ export function HoleEntry({
                         player={p}
                         isWolf={i === wolfIdx}
                         isPartner={mode === "partner" && partnerIdx === i}
+                        strokeDots={playerStrokesOnHole(i, holeIndex, handicap, course)}
                         value={scores[i]}
                         onChange={(v) => {
                             setVal(i, v);
@@ -313,6 +321,7 @@ type RowProps = {
     player: WolfPlayer;
     isWolf: boolean;
     isPartner: boolean;
+    strokeDots: number;
     value: string;
     onChange: (v: string) => void;
     onBump: (delta: number) => void;
@@ -322,6 +331,7 @@ function PlayerRow({
     player,
     isWolf,
     isPartner,
+    strokeDots,
     value,
     onChange,
     onBump,
@@ -350,6 +360,20 @@ function PlayerRow({
                     {isPartner && (
                         <span className="text-[10px] uppercase tracking-[0.15em] font-bold text-primary">
                             Partner
+                        </span>
+                    )}
+                    {strokeDots > 0 && (
+                        <span
+                            className="flex items-center gap-0.5 shrink-0"
+                            aria-label={`${String(strokeDots)} handicap stroke${strokeDots > 1 ? "s" : ""}`}
+                        >
+                            {Array.from({ length: strokeDots }, (_, k) => (
+                                <span
+                                    key={k}
+                                    aria-hidden="true"
+                                    className="w-1.5 h-1.5 rounded-full bg-primary"
+                                />
+                            ))}
                         </span>
                     )}
                 </div>

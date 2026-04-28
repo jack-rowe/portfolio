@@ -8,6 +8,9 @@ import {
     clampScoreInput,
     ScoreInputRow,
 } from "../shared/ScoreInputRow";
+import { getCourse } from "../../_lib/courseData";
+import { playerStrokesOnHole } from "../../_lib/handicap";
+import type { HandicapConfig } from "../../_lib/handicap";
 import type { LcrHole, LcrPlayer } from "../../_lib/lcr/types";
 import { LCR_TOTAL_HOLES } from "../../_lib/lcr/types";
 
@@ -18,6 +21,7 @@ type Props = {
     onSubmit: (hole: LcrHole) => void;
     inline?: boolean;
     submitLabel?: string;
+    handicap?: HandicapConfig;
 };
 
 export function HoleEntry({
@@ -27,7 +31,10 @@ export function HoleEntry({
     onSubmit,
     inline = false,
     submitLabel,
+    handicap,
 }: Props) {
+    const holeIndex = holeNumber - 1;
+    const course = getCourse(handicap?.courseId);
     const [scores, setScores] = useState<string[]>(() =>
         players.map((_, i) => {
             const v = initialHole?.scores[i];
@@ -139,6 +146,7 @@ export function HoleEntry({
                                     {badgeLabel}
                                 </span>
                             }
+                            strokeDots={playerStrokesOnHole(i, holeIndex, handicap, course)}
                             value={scores[i]}
                             onChange={(v) => {
                                 setVal(i, v);

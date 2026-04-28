@@ -13,6 +13,8 @@ type Props = {
     name: string;
     /** Optional badges to render to the right of the player name. */
     badges?: React.ReactNode;
+    /** Number of handicap strokes this player receives on the current hole. */
+    strokeDots?: number;
     value: string;
     onChange: (v: string) => void;
     onBump: (delta: number) => void;
@@ -21,6 +23,7 @@ type Props = {
 export function ScoreInputRow({
     name,
     badges,
+    strokeDots,
     value,
     onChange,
     onBump,
@@ -42,6 +45,20 @@ export function ScoreInputRow({
                         {name}
                     </span>
                     {badges}
+                    {!!strokeDots && strokeDots > 0 && (
+                        <span
+                            className="flex items-center gap-0.5 shrink-0"
+                            aria-label={`${String(strokeDots)} handicap stroke${strokeDots > 1 ? "s" : ""}`}
+                        >
+                            {Array.from({ length: strokeDots }, (_, k) => (
+                                <span
+                                    key={k}
+                                    aria-hidden="true"
+                                    className="w-1.5 h-1.5 rounded-full bg-primary"
+                                />
+                            ))}
+                        </span>
+                    )}
                 </div>
             </div>
 

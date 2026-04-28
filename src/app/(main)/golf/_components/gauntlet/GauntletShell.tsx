@@ -185,6 +185,7 @@ export function GauntletShell({ onResetToSetup }: Props) {
                         players={playersEntering}
                         holeNumber={holeNumber}
                         onSubmit={handleSubmit}
+                        handicap={state.handicap}
                     />
                 ) : (
                     <RecapSection

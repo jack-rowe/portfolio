@@ -5,6 +5,9 @@ import { ArrowRight, Minus, Plus, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getCourse } from "../../_lib/courseData";
+import { playerStrokesOnHole } from "../../_lib/handicap";
+import type { HandicapConfig } from "../../_lib/handicap";
 import type { Player, HoleScores } from "../../_lib/gauntlet/types";
 import { GAUNTLET_TOTAL_HOLES as TOTAL_HOLES } from "../../_lib/gauntlet/types";
 
@@ -12,6 +15,7 @@ type Props = {
     players: Player[];
     holeNumber: number;
     onSubmit: (scores: HoleScores) => void;
+    handicap?: HandicapConfig;
 };
 
 const QUICK_SCORES = [2, 3, 4, 5, 6, 7];
@@ -29,7 +33,10 @@ export function HoleEntry({
     players,
     holeNumber,
     onSubmit,
+    handicap,
 }: Props) {
+    const holeIndex = holeNumber - 1;
+    const course = getCourse(handicap?.courseId);
     const [entry, setEntry] = useState<string[]>(() =>
         players.map(() => ""),
     );
@@ -72,6 +79,7 @@ export function HoleEntry({
                         key={p.id}
                         player={p}
                         target={players[p.targetIndex]}
+                        strokeDots={playerStrokesOnHole(i, holeIndex, handicap, course)}
                         value={entry[i]}
                         onChange={(v) => {
                             setVal(i, v);
@@ -102,12 +110,13 @@ export function HoleEntry({
 type RowProps = {
     player: Player;
     target: Player;
+    strokeDots: number;
     value: string;
     onChange: (v: string) => void;
     onBump: (delta: number) => void;
 };
 
-function PlayerRow({ player, target, value, onChange, onBump }: RowProps) {
+function PlayerRow({ player, target, strokeDots, value, onChange, onBump }: RowProps) {
     const inputId = useId();
     const liveId = `${inputId}-live`;
     const hasScore = value !== "" && Number.parseInt(value, 10) > 0;
@@ -122,6 +131,20 @@ function PlayerRow({ player, target, value, onChange, onBump }: RowProps) {
                     <span className="font-clash text-xl font-bold text-foreground leading-none truncate">
                         {player.name}
                     </span>
+                    {strokeDots > 0 && (
+                        <span
+                            className="flex items-center gap-0.5 shrink-0"
+                            aria-label={`${String(strokeDots)} handicap stroke${strokeDots > 1 ? "s" : ""}`}
+                        >
+                            {Array.from({ length: strokeDots }, (_, k) => (
+                                <span
+                                    key={k}
+                                    aria-hidden="true"
+                                    className="w-1.5 h-1.5 rounded-full bg-primary"
+                                />
+                            ))}
+                        </span>
+                    )}
                     <ArrowRight
                         aria-hidden="true"
                         className="w-3.5 h-3.5 text-muted-foreground shrink-0"

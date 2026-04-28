@@ -8,6 +8,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { HoleEntry } from "./HoleEntry";
+import type { HandicapConfig } from "../../_lib/handicap";
 import type { WolfHole, WolfPlayer } from "../../_lib/wolf/types";
 
 type Props = {
@@ -17,6 +18,7 @@ type Props = {
     players: WolfPlayer[];
     initialHole: WolfHole | null;
     onSave: (holeIndex: number, hole: WolfHole) => void;
+    handicap?: HandicapConfig;
 };
 
 export function EditHoleDialog({
@@ -26,6 +28,7 @@ export function EditHoleDialog({
     players,
     initialHole,
     onSave,
+    handicap,
 }: Props) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -47,6 +50,7 @@ export function EditHoleDialog({
                         holeNumber={holeIndex + 1}
                         initialScores={initialHole.scores}
                         initialDecision={initialHole.decision}
+                        handicap={handicap}
                         onSubmit={(hole) => {
                             onSave(holeIndex, hole);
                             onOpenChange(false);

@@ -7,6 +7,9 @@ import {
     clampScoreInput,
     ScoreInputRow,
 } from "../shared/ScoreInputRow";
+import { getCourse } from "../../_lib/courseData";
+import { playerStrokesOnHole } from "../../_lib/handicap";
+import type { HandicapConfig } from "../../_lib/handicap";
 import type {
     StrokeplayHole,
     StrokeplayPlayer,
@@ -20,6 +23,7 @@ type Props = {
     onSubmit: (hole: StrokeplayHole) => void;
     inline?: boolean;
     submitLabel?: string;
+    handicap?: HandicapConfig;
 };
 
 export function HoleEntry({
@@ -29,7 +33,10 @@ export function HoleEntry({
     onSubmit,
     inline = false,
     submitLabel,
+    handicap,
 }: Props) {
+    const holeIndex = holeNumber - 1;
+    const course = getCourse(handicap?.courseId);
     const [scores, setScores] = useState<string[]>(() =>
         players.map((_, i) =>
             initialScores?.[i] === undefined ? "" : String(initialScores[i]),
@@ -80,6 +87,7 @@ export function HoleEntry({
                     <ScoreInputRow
                         key={p.id}
                         name={p.name}
+                        strokeDots={playerStrokesOnHole(i, holeIndex, handicap, course)}
                         value={scores[i]}
                         onChange={(v) => {
                             setVal(i, v);
