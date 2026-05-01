@@ -3,6 +3,7 @@
 import { GameOverBanner } from "./GameOverBanner";
 import { HoleView } from "./HoleView";
 import type { HoleScores, Player } from "../../_lib/gauntlet/types";
+import type { HandicapConfig } from "../../_lib/handicap";
 
 type Props = {
     playersEntering: Player[];
@@ -15,6 +16,7 @@ type Props = {
     gameOverPlayers: Player[];
     holesPlayed: number;
     onEditFinalHole: () => void;
+    handicap?: HandicapConfig;
 };
 
 export function RecapSection({
@@ -28,6 +30,7 @@ export function RecapSection({
     gameOverPlayers,
     holesPlayed,
     onEditFinalHole,
+    handicap,
 }: Props) {
     return (
         <>
@@ -45,6 +48,7 @@ export function RecapSection({
                 scores={scores}
                 netScores={netScores}
                 onEdit={onEdit}
+                handicap={handicap}
             />
         </>
     );

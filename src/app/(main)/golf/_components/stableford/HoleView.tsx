@@ -4,6 +4,7 @@ import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { CourseInfo } from "../../_lib/courseData";
+import { playerStrokesOnHole } from "../../_lib/handicap";
 import { holePointsFor } from "../../_lib/stableford/engine";
 import type {
     StablefordHole,
@@ -51,6 +52,7 @@ export function HoleView({
                 {players.map((p, i) => {
                     const isBest =
                         players.length > 1 && pointsByPlayer[i] === best;
+                    const dots = playerStrokesOnHole(i, holeIndex, handicap, course);
                     return (
                         <div
                             key={p.id}
@@ -64,6 +66,20 @@ export function HoleView({
                             <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground truncate">
                                 {p.name}
                             </p>
+                            {dots > 0 && (
+                                <span
+                                    className="flex items-center gap-0.5 justify-center"
+                                    aria-label={`${String(dots)} handicap stroke${dots > 1 ? "s" : ""}`}
+                                >
+                                    {Array.from({ length: dots }, (_, k) => (
+                                        <span
+                                            key={k}
+                                            aria-hidden="true"
+                                            className="w-1.5 h-1.5 rounded-full bg-primary"
+                                        />
+                                    ))}
+                                </span>
+                            )}
                             <p
                                 className={cn(
                                     "font-clash text-2xl font-bold tabular-nums leading-tight",

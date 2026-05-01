@@ -2,6 +2,9 @@
 
 import { ArrowRight, Pencil, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getCourse } from "../../_lib/courseData";
+import { playerStrokesOnHole } from "../../_lib/handicap";
+import type { HandicapConfig } from "../../_lib/handicap";
 import { lapProgress } from "../../_lib/gauntlet/engine";
 import type { HoleScores, Player } from "../../_lib/gauntlet/types";
 
@@ -15,6 +18,7 @@ type Props = {
     /** Net scores used for the beat-target comparison (gross when no handicap). */
     netScores: number[];
     onEdit?: () => void;
+    handicap?: HandicapConfig;
 };
 
 export function HoleView({
@@ -24,8 +28,11 @@ export function HoleView({
     scores,
     netScores,
     onEdit,
+    handicap,
 }: Props) {
     const total = playersEntering.length;
+    const holeIndex = holeNumber - 1;
+    const course = getCourse(handicap?.courseId);
 
     return (
         <div className="space-y-3">
@@ -37,6 +44,7 @@ export function HoleView({
                     const lapBefore = lapProgress(p, i, total);
                     const lapAfter = lapProgress(after, i, total);
                     const wonPoint = after.points > p.points;
+                    const dots = playerStrokesOnHole(i, holeIndex, handicap, course);
                     return (
                         <div
                             key={p.id}
@@ -49,6 +57,20 @@ export function HoleView({
                                         <span className="font-clash text-xl font-bold text-foreground leading-none truncate">
                                             {p.name}
                                         </span>
+                                        {dots > 0 && (
+                                            <span
+                                                className="flex items-center gap-0.5 shrink-0"
+                                                aria-label={`${String(dots)} handicap stroke${dots > 1 ? "s" : ""}`}
+                                            >
+                                                {Array.from({ length: dots }, (_, k) => (
+                                                    <span
+                                                        key={k}
+                                                        aria-hidden="true"
+                                                        className="w-1.5 h-1.5 rounded-full bg-primary"
+                                                    />
+                                                ))}
+                                            </span>
+                                        )}
                                         <ArrowRight
                                             aria-hidden="true"
                                             className="w-3.5 h-3.5 text-muted-foreground shrink-0"

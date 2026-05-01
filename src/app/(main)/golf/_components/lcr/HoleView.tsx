@@ -4,6 +4,7 @@ import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getCourse } from "../../_lib/courseData";
+import { playerStrokesOnHole } from "../../_lib/handicap";
 import { holeOutcome } from "../../_lib/lcr/engine";
 import type { LcrHole, LcrPlayer, LcrState } from "../../_lib/lcr/types";
 
@@ -16,12 +17,18 @@ type Props = {
 };
 
 export function HoleView({ players, holeIndex, hole, onEdit, handicap }: Props) {
+    const course = getCourse(handicap?.courseId);
     const out = holeOutcome(hole, players.length, holeIndex, {
         handicap,
-        course: getCourse(handicap?.courseId),
+        course,
     });
     const centerName = players[out.centerIndex].name;
     const outsideNames = out.outsideTeam.map((i) => players[i].name);
+    const centerPlayers = [{ name: centerName, dots: playerStrokesOnHole(out.centerIndex, holeIndex, handicap, course) }];
+    const outsidePlayers = out.outsideTeam.map((i) => ({
+        name: players[i].name,
+        dots: playerStrokesOnHole(i, holeIndex, handicap, course),
+    }));
 
     let banner: string;
     if (out.winner === "center") banner = `${centerName} (Center) takes 2`;
@@ -39,13 +46,13 @@ export function HoleView({ players, holeIndex, hole, onEdit, handicap }: Props) 
                     label="Center"
                     score={out.centerScore}
                     winner={out.winner === "center"}
-                    playerNames={[centerName]}
+                    players={centerPlayers}
                 />
                 <SideCell
                     label="Outside (best ball)"
                     score={out.outsideBest}
                     winner={out.winner === "outside"}
-                    playerNames={outsideNames}
+                    players={outsidePlayers}
                 />
             </div>
             <p
@@ -76,12 +83,12 @@ function SideCell({
     label,
     score,
     winner,
-    playerNames,
+    players,
 }: {
     label: string;
     score: number;
     winner: boolean;
-    playerNames: string[];
+    players: { name: string; dots: number }[];
 }) {
     return (
         <div
@@ -101,9 +108,27 @@ function SideCell({
             >
                 {score}
             </p>
-            <p className="text-xs text-muted-foreground truncate">
-                {playerNames.join(" + ")}
-            </p>
+            <div className="space-y-0.5">
+                {players.map(({ name, dots }) => (
+                    <div key={name} className="flex items-center gap-1">
+                        <span className="text-xs text-muted-foreground truncate">{name}</span>
+                        {dots > 0 && (
+                            <span
+                                className="flex items-center gap-0.5 shrink-0"
+                                aria-label={`${String(dots)} handicap stroke${dots > 1 ? "s" : ""}`}
+                            >
+                                {Array.from({ length: dots }, (_, k) => (
+                                    <span
+                                        key={k}
+                                        aria-hidden="true"
+                                        className="w-1.5 h-1.5 rounded-full bg-primary"
+                                    />
+                                ))}
+                            </span>
+                        )}
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }

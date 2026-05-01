@@ -3,6 +3,8 @@
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { getCourse } from "../../_lib/courseData";
+import { teamStrokesOnHole } from "../../_lib/handicap";
 import { holeOutcome } from "../../_lib/scramble/engine";
 import type {
     ScrambleHole,
@@ -22,6 +24,7 @@ type Props = {
 export function HoleView({ state, players, holeIndex, hole, onEdit }: Props) {
     const teamCount = state.teams.length;
     const out = holeOutcome(hole, teamCount);
+    const course = getCourse(state.handicap?.courseId);
 
     let banner: string;
     if (teamCount === 1) {
@@ -50,6 +53,7 @@ export function HoleView({ state, players, holeIndex, hole, onEdit }: Props) {
                     const memberNames = team
                         .map((idx) => players[idx]?.name ?? "")
                         .filter(Boolean);
+                    const dots = teamStrokesOnHole(team, holeIndex, state.handicap, course);
                     return (
                         <div
                             key={`t-${String(ti)}`}
@@ -70,6 +74,20 @@ export function HoleView({ state, players, holeIndex, hole, onEdit }: Props) {
                             <p className="text-[11px] text-foreground/80 break-words mb-1">
                                 {memberNames.join(" + ")}
                             </p>
+                            {dots > 0 && (
+                                <span
+                                    className="flex items-center gap-0.5 justify-center mb-1"
+                                    aria-label={`${String(dots)} handicap stroke${dots > 1 ? "s" : ""}`}
+                                >
+                                    {Array.from({ length: dots }, (_, k) => (
+                                        <span
+                                            key={k}
+                                            aria-hidden="true"
+                                            className="w-1.5 h-1.5 rounded-full bg-primary"
+                                        />
+                                    ))}
+                                </span>
+                            )}
                             <p
                                 className={cn(
                                     "font-clash text-2xl font-bold tabular-nums leading-tight",

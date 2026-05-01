@@ -4,6 +4,7 @@ import { Pencil, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getCourse } from "../../_lib/courseData";
+import { playerStrokesOnHole } from "../../_lib/handicap";
 import { holeOutcome } from "../../_lib/wolf/engine";
 import type { WolfHole, WolfPlayer, WolfState } from "../../_lib/wolf/types";
 
@@ -23,9 +24,10 @@ function decisionLabel(hole: WolfHole, partnerName?: string): string {
 }
 
 export function HoleView({ players, hole, holeNumber, onEdit, handicap }: Props) {
+    const course = getCourse(handicap?.courseId);
     const outcome = holeOutcome(hole, holeNumber - 1, players.length, {
         handicap,
-        course: getCourse(handicap?.courseId),
+        course,
     });
     const wolf = players[outcome.wolfIndex];
     const partnerName =
@@ -76,6 +78,7 @@ export function HoleView({ players, hole, holeNumber, onEdit, handicap }: Props)
                     {players.map((p, i) => {
                         const onWolfTeam = outcome.wolfTeam.includes(i);
                         const award = outcome.award[i];
+                        const dots = playerStrokesOnHole(i, holeNumber - 1, handicap, course);
                         return (
                             <div
                                 key={p.id}
@@ -93,6 +96,20 @@ export function HoleView({ players, hole, holeNumber, onEdit, handicap }: Props)
                                     {i === outcome.wolfIndex && (
                                         <span className="text-[9px] uppercase tracking-[0.15em] font-bold text-primary">
                                             Wolf
+                                        </span>
+                                    )}
+                                    {dots > 0 && (
+                                        <span
+                                            className="flex items-center gap-0.5 shrink-0"
+                                            aria-label={`${String(dots)} handicap stroke${dots > 1 ? "s" : ""}`}
+                                        >
+                                            {Array.from({ length: dots }, (_, k) => (
+                                                <span
+                                                    key={k}
+                                                    aria-hidden="true"
+                                                    className="w-1.5 h-1.5 rounded-full bg-primary"
+                                                />
+                                            ))}
                                         </span>
                                     )}
                                 </div>

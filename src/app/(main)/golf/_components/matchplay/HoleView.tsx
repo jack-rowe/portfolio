@@ -4,6 +4,7 @@ import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getCourse } from "../../_lib/courseData";
+import { playerStrokesOnHole } from "../../_lib/handicap";
 import { holeOutcome } from "../../_lib/matchplay/engine";
 import type {
     MatchplayHole,
@@ -20,9 +21,10 @@ type Props = {
 };
 
 export function HoleView({ players, holeIndex, hole, onEdit, handicap }: Props) {
+    const course = getCourse(handicap?.courseId);
     const out = holeOutcome(hole, players.length, holeIndex, {
         handicap,
-        course: getCourse(handicap?.courseId),
+        course,
     });
     let banner: string;
     if (out.result === "halve") banner = "Halved";
@@ -47,6 +49,7 @@ export function HoleView({ players, holeIndex, hole, onEdit, handicap }: Props) 
                     const isWinner =
                         out.result === "win" && out.bestPlayers[0] === i;
                     const isBest = out.bestPlayers.includes(i);
+                    const dots = playerStrokesOnHole(i, holeIndex, handicap, course);
                     return (
                         <div
                             key={p.id}
@@ -62,6 +65,20 @@ export function HoleView({ players, holeIndex, hole, onEdit, handicap }: Props) 
                             <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground truncate">
                                 {p.name}
                             </p>
+                            {dots > 0 && (
+                                <span
+                                    className="flex items-center gap-0.5 justify-center"
+                                    aria-label={`${String(dots)} handicap stroke${dots > 1 ? "s" : ""}`}
+                                >
+                                    {Array.from({ length: dots }, (_, k) => (
+                                        <span
+                                            key={k}
+                                            aria-hidden="true"
+                                            className="w-1.5 h-1.5 rounded-full bg-primary"
+                                        />
+                                    ))}
+                                </span>
+                            )}
                             <p
                                 className={cn(
                                     "font-clash text-2xl font-bold tabular-nums leading-tight",

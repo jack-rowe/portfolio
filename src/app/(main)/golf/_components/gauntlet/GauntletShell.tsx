@@ -199,6 +199,7 @@ export function GauntletShell({ onResetToSetup }: Props) {
                             state.handicap,
                             getCourse(state.handicap?.courseId),
                         )}
+                        handicap={state.handicap}
                         onEdit={() => {
                             setEditingHole(clampedViewedHole);
                         }}

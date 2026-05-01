@@ -98,6 +98,7 @@ export function GauntletRecap({ state }: Props) {
                         state.handicap,
                         course,
                     )}
+                    handicap={state.handicap}
                 />
                 <Leaderboard players={state.players} isGameOver={true} />
                 <Scorecard
