@@ -1,6 +1,7 @@
 "use client";
 
-import { Mail } from "lucide-react";
+import { LandPlot, Mail } from "lucide-react";
+import Link from "next/link";
 
 export default function PortfolioPage() {
   return (
@@ -52,6 +53,10 @@ export default function PortfolioPage() {
           </a>
         </div>
       </div>
+
+      <Link href="/golf" className="absolute top-5 right-5">
+        <LandPlot className="w-6 h-6 text-muted-foreground" />
+      </Link>
     </div>
   );
 }
