@@ -1,8 +1,8 @@
 "use client";
 
-import { ChevronDown, LandPlot, Mail } from "lucide-react";
-import Link from "next/link";
+import { ChevronDown, Mail } from "lucide-react";
 
+import { NavMenu } from "./_components/NavMenu";
 import { ProjectGrid } from "./_components/ProjectGrid";
 
 export default function PortfolioPage() {
@@ -57,9 +57,7 @@ export default function PortfolioPage() {
           </div>
         </div>
 
-        <Link href="/golf" className="absolute top-5 right-5">
-          <LandPlot className="w-6 h-6 text-muted-foreground" />
-        </Link>
+        <NavMenu />
 
         <a
           href="#projects"
