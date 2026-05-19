@@ -125,12 +125,17 @@ export const PORTFOLIO_PROJECTS: TPortfolioProject[] = [
       {
         heading: "What it does",
         body: "The hook returns set, undo, redo, canUndo, canRedo, batch, takeSnapshot, and restoreSnapshot. Batch groups multiple state mutations into a single history entry. Snapshots are full copies of the entire stack — not just the current value — so you can jump to any previous checkpoint. History depth is configurable and a custom isEqual function controls when new entries are created.",
-        demoId: "easy-history",
+        demoId: "counter",
       },
       {
         heading: "Batch updates & snapshots",
         body: "batch() lets you derive the next state from current state in a single history entry — useful for bulk edits like completing all tasks at once. takeSnapshot() captures the entire stack, not just the present value, so restoreSnapshot() brings back the full undo/redo history from that point. Try it below: edit the list, save a checkpoint, keep making changes, then restore.",
         demoId: "task-list",
+      },
+      {
+        heading: "Even works with canvas!",
+        body: "Easy History can manage any state shape, including complex objects like canvas drawings. The Canvas Draw demo uses useHistory to track an array of stroke objects representing user drawings. Each stroke is a series of points, and the history stack captures every change, allowing full undo/redo functionality for freehand drawing.",
+        demoId: "canvas-draw",
       },
       {
         heading: "Why I built it",
