@@ -1,28 +1,41 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronUp, LandPlot, Menu, Printer } from "lucide-react";
+import { ChevronUp, LandPlot, Menu, Moon, Printer, Sun } from "lucide-react";
 import Link from "next/link";
+import { useTheme } from "next-themes";
 
 export function NavMenu() {
     const [menuOpen, setMenuOpen] = useState(false);
+    const { resolvedTheme, setTheme } = useTheme();
 
     return (
         <div className="fixed top-5 right-5 z-50">
-            <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="relative w-6 h-6 text-muted-foreground hover:text-primary transition-colors duration-200"
-                aria-label={menuOpen ? "Close menu" : "Open menu"}
-            >
-                <Menu
-                    className={`w-6 h-6 absolute inset-0 transition-all duration-300 ${menuOpen ? "opacity-0 rotate-90 scale-75" : "opacity-100 rotate-0 scale-100"
-                        }`}
-                />
-                <ChevronUp
-                    className={`w-6 h-6 absolute inset-0 transition-all duration-300 ${menuOpen ? "opacity-100 rotate-0 scale-100" : "opacity-0 -rotate-90 scale-75"
-                        }`}
-                />
-            </button>
+            <div className="flex items-center gap-3">
+                <button
+                    onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+                    className="w-6 h-6 text-muted-foreground hover:text-primary transition-colors duration-200"
+                    aria-label="Toggle theme"
+                >
+                    <Sun className="w-6 h-6 hidden dark:block" />
+                    <Moon className="w-6 h-6 block dark:hidden" />
+                </button>
+
+                <button
+                    onClick={() => setMenuOpen(!menuOpen)}
+                    className="relative w-6 h-6 text-muted-foreground hover:text-primary transition-colors duration-200"
+                    aria-label={menuOpen ? "Close menu" : "Open menu"}
+                >
+                    <Menu
+                        className={`w-6 h-6 absolute inset-0 transition-all duration-300 ${menuOpen ? "opacity-0 rotate-90 scale-75" : "opacity-100 rotate-0 scale-100"
+                            }`}
+                    />
+                    <ChevronUp
+                        className={`w-6 h-6 absolute inset-0 transition-all duration-300 ${menuOpen ? "opacity-100 rotate-0 scale-100" : "opacity-0 -rotate-90 scale-75"
+                            }`}
+                    />
+                </button>
+            </div>
 
             <div
                 className={`absolute bg-background/20 backdrop-blur-md  pl-4 py-2 rounded-lg top-full mt-3 right-0 flex flex-col items-end gap-3 transition-all duration-300 ease-in-out ${menuOpen

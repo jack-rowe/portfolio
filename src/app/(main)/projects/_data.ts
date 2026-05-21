@@ -32,6 +32,7 @@ export const PORTFOLIO_PROJECTS: TPortfolioProject[] = [
       "Vitest",
       "Local Storage",
     ],
+    cover: "/projects/golf/main-1.png",
     links: [
       { label: "Launch app", href: "/golf" },
       {

@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 
 import { PORTFOLIO_PROJECTS } from "../projects/_data";
@@ -43,28 +44,41 @@ export function ProjectGrid() {
                         >
                             <Link
                                 href={`/projects/${project.slug}`}
-                                className="group relative flex h-full flex-col justify-between rounded-2xl border border-border/60 bg-card/40 p-6 transition-all duration-200 hover:border-primary/60 hover:bg-card/80 hover:-translate-y-1"
+                                className="group relative flex h-full flex-col justify-between rounded-2xl border border-border/60 bg-card/40 overflow-hidden transition-all duration-200 hover:border-primary/60 hover:bg-card/80 hover:-translate-y-1"
                             >
-                                <div>
-                                    <div className="flex items-start justify-between gap-4">
-                                        <h3 className="text-2xl font-semibold text-foreground group-hover:text-primary transition-colors">
-                                            {project.title}
-                                        </h3>
-                                        <ArrowUpRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+                                {project.cover && (
+                                    <div className="relative w-full aspect-video overflow-hidden">
+                                        <Image
+                                            src={project.cover}
+                                            alt={`${project.title} preview`}
+                                            fill
+                                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                        />
                                     </div>
-                                    <p className="mt-3 text-muted-foreground leading-relaxed">
-                                        {project.tagline}
-                                    </p>
-                                </div>
-                                <div className="mt-6 flex flex-wrap gap-2">
-                                    {project.tech.slice(0, 4).map((t) => (
-                                        <span
-                                            key={t}
-                                            className="rounded-full border border-border/60 px-2.5 py-0.5 text-xs text-muted-foreground"
-                                        >
-                                            {t}
-                                        </span>
-                                    ))}
+                                )}
+                                <div className="p-6 flex flex-col flex-1 justify-between">
+                                    <div>
+                                        <div className="flex items-start justify-between gap-4">
+                                            <h3 className="text-2xl font-semibold text-foreground group-hover:text-primary transition-colors">
+                                                {project.title}
+                                            </h3>
+                                            <ArrowUpRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+                                        </div>
+                                        <p className="mt-3 text-muted-foreground leading-relaxed">
+                                            {project.tagline}
+                                        </p>
+                                    </div>
+                                    <div className="mt-6 flex flex-wrap gap-2">
+                                        {project.tech.slice(0, 4).map((t) => (
+                                            <span
+                                                key={t}
+                                                className="rounded-full border border-border/60 px-2.5 py-0.5 text-xs text-muted-foreground"
+                                            >
+                                                {t}
+                                            </span>
+                                        ))}
+                                    </div>
                                 </div>
                             </Link>
                         </motion.div>

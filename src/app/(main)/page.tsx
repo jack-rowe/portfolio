@@ -16,7 +16,7 @@ export default function PortfolioPage() {
               <span className="block text-primary">JACK</span>
               <span className="block text-foreground mt-2">ROWE</span>
             </h1>
-            <div className="mt-6 text-xl md:text-2xl text-muted-foreground font-light tracking-wide">
+            <div className="mt-6 text-xl md:text-2xl text-muted-foreground tracking-wide">
               Full Stack Developer
             </div>
           </div>
