@@ -18,7 +18,50 @@ body {
     --soft-linen: 47 19% 89%;
     --border-gray: 0 0% 25%;
 
-    /* Semantic colors */
+    /* Light theme (default) */
+    --background: 47 19% 95%;
+    --foreground: var(--carbon-black);
+    --card: 0 0% 100%;
+    --card-foreground: var(--carbon-black);
+    --popover: 0 0% 100%;
+    --popover-foreground: var(--carbon-black);
+
+    --primary: 128 30% 38%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 136 22% 88%;
+    --secondary-foreground: var(--pine-teal);
+
+    --muted: 0 0% 94%;
+    --muted-foreground: 0 0% 25%;
+    --accent: 136 22% 88%;
+    --accent-foreground: var(--carbon-black);
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 85%;
+    --input: 0 0% 94%;
+    --ring: 128 30% 38%;
+
+    --chart-1: 128 30% 38%;
+    --chart-2: var(--pine-teal);
+    --chart-3: var(--carbon-black);
+    --chart-4: 128 24% 45%;
+    --chart-5: 136 22% 35%;
+    --radius: 0.5rem;
+
+    /* Sidebar colors */
+    --sidebar-background: 47 19% 97%;
+    --sidebar-foreground: var(--carbon-black);
+    --sidebar-primary: 128 30% 38%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 136 22% 88%;
+    --sidebar-accent-foreground: var(--carbon-black);
+    --sidebar-border: 0 0% 85%;
+    --sidebar-ring: 128 30% 38%;
+  }
+
+  .dark {
+    /* Dark theme */
     --background: var(--carbon-black);
     --foreground: var(--soft-linen);
     --card: var(--charcoal);
@@ -47,7 +90,6 @@ body {
     --chart-3: var(--soft-linen);
     --chart-4: 128 24% 45%;
     --chart-5: 136 22% 35%;
-    --radius: 0.5rem;
 
     /* Sidebar colors */
     --sidebar-background: var(--carbon-black);
