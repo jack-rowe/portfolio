@@ -1,6 +1,28 @@
 import type { Metadata } from "next";
 import { ReactNode } from "react";
+import { Saira, Saira_Condensed, Spline_Sans_Mono } from "next/font/google";
 import "./fantasy.css";
+
+const saira = Saira({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-saira",
+  display: "swap",
+});
+
+const sairaCondensed = Saira_Condensed({
+  subsets: ["latin"],
+  weight: ["500", "600", "700", "800"],
+  variable: "--font-saira-condensed",
+  display: "swap",
+});
+
+const splineMono = Spline_Sans_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-spline-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Trade Desk — Sleeper Trade Finder",
@@ -11,18 +33,10 @@ export const metadata: Metadata = {
 
 export default function FantasyLayout({ children }: { children: ReactNode }) {
   return (
-    <>
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link
-        rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossOrigin="anonymous"
-      />
-      <link
-        href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700;800&family=Saira:wght@400;500;600&family=Spline+Sans+Mono:wght@400;500;600&display=swap"
-        rel="stylesheet"
-      />
-      <div className="fantasy-scope">{children}</div>
-    </>
+    <div
+      className={`fantasy-scope ${saira.variable} ${sairaCondensed.variable} ${splineMono.variable}`}
+    >
+      {children}
+    </div>
   );
 }

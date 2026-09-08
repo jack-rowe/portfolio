@@ -10,9 +10,9 @@
   --lime-dim: #94b52c;
   --amber: #f7b23a;
   --red: #f75a3a;
-  --mono: "Spline Sans Mono", ui-monospace, monospace;
-  --display: "Saira Condensed", "Arial Narrow", sans-serif;
-  --body: "Saira", sans-serif;
+  --mono: var(--font-spline-mono), "Spline Sans Mono", ui-monospace, monospace;
+  --display: var(--font-saira-condensed), "Saira Condensed", "Arial Narrow", sans-serif;
+  --body: var(--font-saira), "Saira", sans-serif;
 }
 
 .fantasy-scope, .fantasy-scope * {

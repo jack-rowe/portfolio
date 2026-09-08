@@ -267,6 +267,12 @@ function lowerBound(arr: Pkg[], lo: number): number {
 const TOTAL_EVAL_BUDGET = 60000;
 const MIN_BUDGET_PER_OPPONENT = 8000;
 
+function stripScore(p: TradeProposal & { _score: number }): TradeProposal {
+  const copy: TradeProposal & { _score?: number } = { ...p };
+  delete copy._score;
+  return copy;
+}
+
 export function findTrades(input: TradeSearchInput): TradeProposal[] {
   const { myTeam, opponents, rosterPositions, settings } = input;
   const targetPosition =
@@ -499,7 +505,7 @@ export function findTrades(input: TradeSearchInput): TradeProposal[] {
   }
 
   proposals.sort((a, b) => b._score - a._score);
-  return proposals.slice(0, settings.numResults).map(({ _score, ...p }) => p);
+  return proposals.slice(0, settings.numResults).map(stripScore);
 }
 
 // ---------------------------------------------------------------------------
@@ -1015,7 +1021,7 @@ export function findThreeTeamTrades(
   }
 
   out.sort((a, b) => b._score - a._score);
-  return out.slice(0, settings.numResults).map(({ _score, ...p }) => p);
+  return out.slice(0, settings.numResults).map(stripScore);
 }
 
 const STAR_BUDGET = 20000;
@@ -1155,8 +1161,7 @@ export function findStarTrades(input: TradeSearchInput): TradeProposal[] {
   }
 
   if (!best) return [];
-  const { _score, ...p } = best;
-  return [p];
+  return [stripScore(best)];
 }
 
 // ---------------------------------------------------------------------------
