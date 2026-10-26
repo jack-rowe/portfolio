@@ -1,0 +1,76 @@
+rules_version = '2';
+
+// Daily Games League
+// Anyone can read. Only the board owner can write, and writes must match the
+// shapes in firebase/types.ts.
+//
+// Rules can't read env vars: replace REPLACE_WITH_OWNER_UID below with the same
+// value as NEXT_PUBLIC_FIREBASE_OWNER_UID before deploying.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner() {
+      return request.auth != null && request.auth.uid == 'jJBomrQJG3d150j7t1b38pwTD0Z2';
+    }
+
+    function isSlug(s) {
+      return s is string && s.size() <= 40 && s.matches('^[a-z0-9]+(-[a-z0-9]+)*$');
+    }
+
+    function isName(s) {
+      return s is string && s.size() > 0 && s.size() <= 40;
+    }
+
+    function isDate(s) {
+      return s is string && s.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+
+    match /players/{slug} {
+      allow read: if true;
+      allow create: if isOwner()
+        && isSlug(slug)
+        && request.resource.data.keys().hasOnly(['name', 'createdAt'])
+        && isName(request.resource.data.name)
+        && request.resource.data.createdAt == request.time;
+      // Renames change only the name; the slug (document ID) stays so results keep pointing here.
+      allow update: if isOwner()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name'])
+        && isName(request.resource.data.name);
+      allow delete: if isOwner();
+    }
+
+    match /games/{slug} {
+      allow read: if true;
+      allow create: if isOwner()
+        && isSlug(slug)
+        && request.resource.data.keys().hasAll(['name', 'type', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['name', 'type', 'max', 'canFail', 'higherWins', 'createdAt'])
+        && isName(request.resource.data.name)
+        && request.resource.data.type in ['guesses', 'count', 'points', 'time', 'golf', 'solved']
+        && (!('max' in request.resource.data) || (request.resource.data.max is int && request.resource.data.max >= 1 && request.resource.data.max <= 20))
+        && (!('canFail' in request.resource.data) || request.resource.data.canFail is bool)
+        && (!('higherWins' in request.resource.data) || request.resource.data.higherWins is bool)
+        && request.resource.data.createdAt == request.time;
+      allow delete: if isOwner();
+    }
+
+    match /results/{id} {
+      allow read: if true;
+      // create and update both allowed: re-logging the same game, day and player overwrites.
+      allow create, update: if isOwner()
+        && request.resource.data.keys().hasOnly(['game', 'gameName', 'player', 'date', 'score', 'fail', 'shown', 'createdAt'])
+        && request.resource.data.keys().hasAll(['game', 'gameName', 'player', 'date', 'score', 'fail', 'shown', 'createdAt'])
+        && isSlug(request.resource.data.game)
+        && isSlug(request.resource.data.player)
+        && isDate(request.resource.data.date)
+        && id == request.resource.data.game + '-' + request.resource.data.date + '-' + request.resource.data.player
+        && request.resource.data.gameName is string
+        && request.resource.data.score is number
+        && request.resource.data.fail is bool
+        && request.resource.data.shown is string && request.resource.data.shown.size() <= 20
+        && request.resource.data.createdAt == request.time;
+      allow delete: if isOwner();
+    }
+  }
+}
