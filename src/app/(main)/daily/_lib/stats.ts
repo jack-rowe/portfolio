@@ -84,17 +84,57 @@ export function formatPoints(n: number): string {
     return formatNumber(n, 1);
 }
 
+export type DayTotal = {
+    /** Player slug. */
+    player: string;
+    rank: number;
+    points: number;
+    wins: number;
+    played: number;
+};
+
+/** Everyone who played on one day, most points first. Equal (rounded) points share a rank. */
+export function dayTotals(cards: DayCard[]): DayTotal[] {
+    const totals = new Map<string, Omit<DayTotal, "rank">>();
+    for (const card of cards) {
+        for (const r of card.ranked) {
+            const row = totals.get(r.player) ?? { player: r.player, points: 0, wins: 0, played: 0 };
+            row.points += card.points.get(r.player) ?? 0;
+            if (card.winners.includes(r.player)) row.wins++;
+            row.played++;
+            totals.set(r.player, row);
+        }
+    }
+    const rows = [...totals.values()].sort((a, b) => roundPoints(b.points) - roundPoints(a.points) || b.wins - a.wins);
+    return rows.map((row) => {
+        const first = rows.findIndex((o) => roundPoints(o.points) === roundPoints(row.points));
+        return { ...row, rank: first + 1 };
+    });
+}
+
+/** Players with the most points on one day; empty when nobody scored. */
+export function dayLeaders(totals: DayTotal[]): DayTotal[] {
+    if (totals.length === 0 || roundPoints(totals[0].points) === 0) return [];
+    return totals.filter((t) => t.rank === 1);
+}
+
 /** "Sam leads with 6.3 pts", "Sam and Alex are tied with 5 pts each", or "No points yet". */
 export function leaderLine(cards: DayCard[], nameOf: (slug: string) => string): string {
-    const totals = new Map<string, number>();
-    for (const card of cards) {
-        for (const [p, n] of card.points) totals.set(p, (totals.get(p) ?? 0) + n);
+    const leaders = dayLeaders(dayTotals(cards));
+    if (leaders.length === 0) return "No points yet";
+    const top = formatPoints(leaders[0].points);
+    const names = leaders.map((t) => nameOf(t.player));
+    if (names.length === 1) return `${names[0]} leads with ${top} pts`;
+    return `${joinNames(names)} are tied with ${top} pts each`;
+}
+
+/** Each day with results, mapped to that day's leaders. */
+export function leadersByDay(games: Game[], results: Result[]): Map<string, DayTotal[]> {
+    const byDay = new Map<string, DayTotal[]>();
+    for (const [date, dayResults] of groupBy(results, (r) => r.date)) {
+        byDay.set(date, dayLeaders(dayTotals(dayCards(games, dayResults, date))));
     }
-    if (totals.size === 0) return "No points yet";
-    const top = Math.max(...[...totals.values()].map(roundPoints));
-    const leaders = [...totals.entries()].filter(([, n]) => roundPoints(n) === top).map(([p]) => nameOf(p));
-    if (leaders.length === 1) return `${leaders[0]} leads with ${formatPoints(top)} pts`;
-    return `${joinNames(leaders)} are tied with ${formatPoints(top)} pts each`;
+    return byDay;
 }
 
 export type Period = "7" | "30" | "all";

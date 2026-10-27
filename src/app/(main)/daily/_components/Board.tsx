@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { DailyData } from "../_hooks/use-daily-data";
 import { liveResults } from "../_lib/stats";
+import { CalendarTab } from "./CalendarTab";
 import { StandingsTab } from "./StandingsTab";
 import { TodayTab } from "./TodayTab";
 
@@ -31,9 +32,10 @@ export function Board({ players, games, results, loading, error, today }: Props)
 
     return (
         <Tabs defaultValue="today" className="flex flex-col gap-4">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="today">Today</TabsTrigger>
                 <TabsTrigger value="standings">Standings</TabsTrigger>
+                <TabsTrigger value="calendar">Calendar</TabsTrigger>
                 <TabsTrigger value="trends">Trends</TabsTrigger>
             </TabsList>
             <TabsContent value="today" className="mt-0">
@@ -41,6 +43,9 @@ export function Board({ players, games, results, loading, error, today }: Props)
             </TabsContent>
             <TabsContent value="standings" className="mt-0">
                 <StandingsTab {...props} />
+            </TabsContent>
+            <TabsContent value="calendar" className="mt-0">
+                <CalendarTab {...props} />
             </TabsContent>
             <TabsContent value="trends" className="mt-0">
                 <TrendsTab {...props} />

@@ -1,8 +1,17 @@
 import { describe, expect, test } from "vitest";
 
 import type { Game, Player, Result } from "~firebase/types";
-import { addDays } from "./dates";
-import { currentStreak, dayCards, leaderLine, pickBoardDay, standings, trendSeries } from "./stats";
+import { addDays, addMonths, monthGrid } from "./dates";
+import {
+    currentStreak,
+    dayCards,
+    dayTotals,
+    leaderLine,
+    leadersByDay,
+    pickBoardDay,
+    standings,
+    trendSeries,
+} from "./stats";
 
 const TODAY = "2026-10-25";
 
@@ -123,5 +132,42 @@ describe("trendSeries", () => {
         expect(series).toHaveLength(30);
         expect(series.at(-1)).toEqual({ date: TODAY, sam: 4, jo: null });
         expect(series.at(-2)?.sam).toBe(3);
+    });
+});
+
+describe("calendar", () => {
+    test("day totals add points across games and share ranks", () => {
+        const cards = dayCards(
+            [wordle, strands],
+            [r(wordle, sam, TODAY, 2), r(wordle, alex, TODAY, 4), r(strands, sam, TODAY, 1), r(strands, alex, TODAY, 5), r(strands, jo, TODAY, 5)],
+            TODAY,
+        );
+        const totals = dayTotals(cards);
+        expect(totals.map((t) => [t.player, t.rank, t.played])).toEqual([
+            ["sam", 1, 2],
+            ["alex", 2, 2],
+            ["jo", 3, 1],
+        ]);
+        expect(totals.reduce((sum, t) => sum + t.points, 0)).toBeCloseTo(20);
+    });
+
+    test("leaders by day; a solo day has results but no leader", () => {
+        const yesterday = addDays(TODAY, -1);
+        const byDay = leadersByDay(
+            [wordle],
+            [r(wordle, sam, TODAY, 2), r(wordle, alex, TODAY, 4), r(wordle, jo, yesterday, 3)],
+        );
+        expect(byDay.get(TODAY)?.map((t) => t.player)).toEqual(["sam"]);
+        expect(byDay.get(yesterday)).toEqual([]);
+        expect(byDay.has(addDays(TODAY, -2))).toBe(false);
+    });
+
+    test("month grid starts on Sunday and months roll over years", () => {
+        // October 1, 2026 is a Thursday.
+        const grid = monthGrid("2026-10");
+        expect(grid.slice(0, 5)).toEqual([null, null, null, null, "2026-10-01"]);
+        expect(grid.at(-1)).toBe("2026-10-31");
+        expect(addMonths("2026-01", -1)).toBe("2025-12");
+        expect(addMonths("2026-12", 1)).toBe("2027-01");
     });
 });
