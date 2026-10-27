@@ -1,6 +1,6 @@
 import type { Game, Player, Result } from "~firebase/types";
 import { addDays } from "./dates";
-import { compareResults, lowerIsBetter } from "./scoring";
+import { compareResults, dayPoints, formatNumber, lowerIsBetter } from "./scoring";
 
 /** Only results whose game is still on the board. Removed games keep their data but drop off. */
 export function liveResults(games: Game[], results: Result[]): Result[] {
@@ -46,6 +46,8 @@ export type DayCard = {
     /** Best to worst. */
     ranked: Result[];
     winners: string[];
+    /** Player slug -> share of the pot. Empty when nobody scored. */
+    points: Map<string, number>;
 };
 
 /** One card per game played on `date`, in game creation order. */
@@ -62,6 +64,7 @@ export function dayCards(games: Game[], results: Result[], date: string): DayCar
                 game,
                 ranked: [...dayResults].sort((a, b) => compareResults(game, a, b)),
                 winners: winnersOf(game, dayResults),
+                points: dayPoints(game, dayResults),
             },
         ];
     });
@@ -72,21 +75,26 @@ function joinNames(names: string[]): string {
     return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 }
 
-function winsText(n: number): string {
-    return `${String(n)} win${n === 1 ? "" : "s"}`;
+/** Points rounded to what's shown, so players who look tied are tied. */
+export function roundPoints(n: number): number {
+    return Number(n.toFixed(1));
 }
 
-/** "Sam leads with 2 wins", "Sam and Alex are tied with 1 win each", or "No wins yet". */
+export function formatPoints(n: number): string {
+    return formatNumber(n, 1);
+}
+
+/** "Sam leads with 6.3 pts", "Sam and Alex are tied with 5 pts each", or "No points yet". */
 export function leaderLine(cards: DayCard[], nameOf: (slug: string) => string): string {
-    const wins = new Map<string, number>();
+    const totals = new Map<string, number>();
     for (const card of cards) {
-        for (const p of card.winners) wins.set(p, (wins.get(p) ?? 0) + 1);
+        for (const [p, n] of card.points) totals.set(p, (totals.get(p) ?? 0) + n);
     }
-    if (wins.size === 0) return "No wins yet";
-    const top = Math.max(...wins.values());
-    const leaders = [...wins.entries()].filter(([, n]) => n === top).map(([p]) => nameOf(p));
-    if (leaders.length === 1) return `${leaders[0]} leads with ${winsText(top)}`;
-    return `${joinNames(leaders)} are tied with ${winsText(top)} each`;
+    if (totals.size === 0) return "No points yet";
+    const top = Math.max(...[...totals.values()].map(roundPoints));
+    const leaders = [...totals.entries()].filter(([, n]) => roundPoints(n) === top).map(([p]) => nameOf(p));
+    if (leaders.length === 1) return `${leaders[0]} leads with ${formatPoints(top)} pts`;
+    return `${joinNames(leaders)} are tied with ${formatPoints(top)} pts each`;
 }
 
 export type Period = "7" | "30" | "all";
@@ -94,6 +102,10 @@ export type Period = "7" | "30" | "all";
 export type StandingRow = {
     player: Player;
     rank: number;
+    /** Total share of the pot across every game-day played. */
+    points: number;
+    /** Points per result logged. */
+    ppg: number;
     wins: number;
     played: number;
     losses: number;
@@ -145,7 +157,7 @@ type StandingsInput = {
     today: string;
 };
 
-/** Players who played in the period, best first. */
+/** Players who played in the period, most points first. */
 export function standings({ players, games, results, gameSlug, period, today }: StandingsInput): StandingRow[] {
     const game = gameSlug ? games.find((g) => g.slug === gameSlug) : undefined;
     if (gameSlug && !game) return [];
@@ -155,10 +167,12 @@ export function standings({ players, games, results, gameSlug, period, today }: 
 
     const gamesBySlug = new Map(games.map((g) => [g.slug, g]));
     const wins = new Map<string, number>();
+    const points = new Map<string, number>();
     for (const dayResults of groupBy(inPeriod, (r) => `${r.game}|${r.date}`).values()) {
         const dayGame = gamesBySlug.get(dayResults[0].game);
         if (!dayGame) continue;
         for (const p of winnersOf(dayGame, dayResults)) wins.set(p, (wins.get(p) ?? 0) + 1);
+        for (const [p, n] of dayPoints(dayGame, dayResults)) points.set(p, (points.get(p) ?? 0) + n);
     }
 
     const periodByPlayer = groupBy(inPeriod, (r) => r.player);
@@ -168,9 +182,12 @@ export function standings({ players, games, results, gameSlug, period, today }: 
     const rows = players.flatMap((player): Omit<StandingRow, "rank">[] => {
         const mine = periodByPlayer.get(player.slug);
         if (!mine) return [];
+        const total = points.get(player.slug) ?? 0;
         return [
             {
                 player,
+                points: total,
+                ppg: total / mine.length,
                 wins: wins.get(player.slug) ?? 0,
                 played: mine.length,
                 losses: mine.filter((r) => r.fail).length,
@@ -184,20 +201,28 @@ export function standings({ players, games, results, gameSlug, period, today }: 
         if (!game || a === null || b === null) return 0;
         return averageIsBetterLow(game) ? a - b : b - a;
     };
+    const comparePoints = (a: number, b: number): number => roundPoints(b) - roundPoints(a);
     rows.sort(
         (a, b) =>
+            comparePoints(a.points, b.points) ||
             b.wins - a.wins ||
             compareAvg(a.average, b.average) ||
             b.played - a.played ||
             a.player.name.localeCompare(b.player.name),
     );
 
-    // Competition ranking: equal wins (and equal average in the per-game view) share a rank.
+    // Competition ranking: equal points and wins (and equal average in the per-game view) share a rank.
     return rows.map((row, i) => {
         let rank = i + 1;
         for (let j = i - 1; j >= 0; j--) {
             const prev = rows[j];
-            if (prev.wins !== row.wins || compareAvg(prev.average, row.average) !== 0) break;
+            if (
+                comparePoints(prev.points, row.points) !== 0 ||
+                prev.wins !== row.wins ||
+                compareAvg(prev.average, row.average) !== 0
+            ) {
+                break;
+            }
             rank = j + 1;
         }
         return { ...row, rank };

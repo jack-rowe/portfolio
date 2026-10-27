@@ -51,7 +51,7 @@ describe("today board", () => {
         expect(cards[0].winners.sort()).toEqual(["alex", "sam"]);
         expect(cards[0].ranked.at(-1)?.player).toBe("jo");
         expect(cards[1].winners).toEqual(["alex"]);
-        expect(leaderLine(cards, names)).toBe("Alex leads with 2 wins");
+        expect(leaderLine(cards, names)).toBe("Alex leads with 11.7 pts");
     });
 
     test("no winner when only one person played or everyone failed", () => {
@@ -62,7 +62,8 @@ describe("today board", () => {
         );
         expect(cards[0].winners).toEqual([]);
         expect(dayCards([wordle], [r(wordle, sam, TODAY, 2)], TODAY)[0].winners).toEqual([]);
-        expect(leaderLine(cards, names)).toBe("No wins yet");
+        expect(cards[0].points.size).toBe(0);
+        expect(leaderLine(cards, names)).toBe("No points yet");
     });
 
     test("tie line", () => {
@@ -71,7 +72,7 @@ describe("today board", () => {
             [r(wordle, sam, TODAY, 2), r(wordle, alex, TODAY, 4), r(strands, sam, TODAY, 1), r(strands, alex, TODAY, 5)],
             TODAY,
         );
-        expect(leaderLine(cards, names)).toBe("Sam and Alex are tied with 1 win each");
+        expect(leaderLine(cards, names)).toBe("Sam and Alex are tied with 10 pts each");
     });
 });
 
@@ -87,9 +88,13 @@ describe("standings", () => {
         r(wordle, alex, addDays(TODAY, -40), 6),
     ];
 
-    test("wins, played, average, losses over the period", () => {
+    test("points, wins, played, average, losses over the period", () => {
         const rows = standings({ players, games: [wordle], results, gameSlug: "wordle", period: "7", today: TODAY });
         expect(rows.map((x) => x.player.slug)).toEqual(["sam", "alex"]);
+        // Sam: 3 vs 4 (5.71), 5 vs 2 (3.33), 4 vs X (10). Every day's pot is 10.
+        expect(rows[0].points).toBeCloseTo(19.05, 2);
+        expect(rows[1].points).toBeCloseTo(10.95, 2);
+        expect(rows[0].ppg).toBeCloseTo(6.35, 2);
         expect(rows[0]).toMatchObject({ rank: 1, wins: 2, played: 3, losses: 0, average: 4 });
         expect(rows[1]).toMatchObject({ rank: 2, wins: 1, played: 3, losses: 1 });
     });

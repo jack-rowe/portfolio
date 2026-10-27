@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import type { Game, Player, Result } from "~firebase/types";
 import { formatDay } from "../_lib/dates";
 import { compareResults } from "../_lib/scoring";
-import { dayCards, leaderLine, pickBoardDay } from "../_lib/stats";
+import { dayCards, formatPoints, leaderLine, pickBoardDay } from "../_lib/stats";
 import { Container } from "./Container";
 import { GameIcon } from "./GameIconButton";
 import { PlayerIcon } from "./PlayerIconButton";
@@ -36,7 +36,7 @@ export function TodayTab({ players, games, results, today }: Props) {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {cards.map(({ game, ranked, winners }) => (
+                {cards.map(({ game, ranked, winners, points }) => (
                     <Container key={game.slug} className="flex flex-col gap-3">
                         <h3 className="flex items-center gap-2 font-clash text-lg font-bold leading-none">
                             <GameIcon game={game} />
@@ -49,6 +49,7 @@ export function TodayTab({ players, games, results, today }: Props) {
                                 const rank = first === -1 ? i + 1 : first + 1;
                                 const won = winners.includes(r.player);
                                 const player = byPlayer.get(r.player) ?? { slug: r.player, name: r.player };
+                                const earned = points.get(r.player);
                                 return (
                                     <li key={r.id} className="flex items-center gap-2">
                                         <span className="w-4 text-right text-sm tabular-nums text-muted-foreground">
@@ -67,6 +68,14 @@ export function TodayTab({ players, games, results, today }: Props) {
                                         >
                                             {r.shown}
                                         </span>
+                                        {earned !== undefined && (
+                                            <span
+                                                aria-label={`${formatPoints(earned)} points`}
+                                                className="w-10 text-right text-sm tabular-nums text-muted-foreground"
+                                            >
+                                                +{formatPoints(earned)}
+                                            </span>
+                                        )}
                                     </li>
                                 );
                             })}

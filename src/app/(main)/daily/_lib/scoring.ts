@@ -148,6 +148,64 @@ export function compareResults(game: Pick<Game, "type" | "higherWins">, a: Resul
     return lowerIsBetter(game) ? a.score - b.score : b.score - a.score;
 }
 
+/** Points split between everyone who played a game on one day. */
+export const POT = 10;
+/** Golf has no zero to measure "twice as bad" from, so this many strokes better counts as a crush. */
+export const GOLF_CRUSH = 4;
+
+/**
+ * How decisively `me` beat `them`, from 0 (lost or tied) to 1 (crushed).
+ * A crush means their result was at least twice as bad as mine. Beating a fail is always a crush.
+ */
+export function headToHead(game: Pick<Game, "type" | "higherWins">, me: Result, them: Result): number {
+    if (me.fail) return 0;
+    if (them.fail) return 1;
+    if (compareResults(game, me, them) >= 0) return 0;
+
+    let ratio: number;
+    switch (game.type) {
+        case "solved":
+            return 0;
+        case "golf":
+            return Math.min(1, (them.score - me.score) / GOLF_CRUSH);
+        case "count":
+            // +1 so a perfect game (0 mistakes) can still be compared.
+            ratio = (them.score + 1) / (me.score + 1);
+            break;
+        case "guesses":
+        case "time":
+            ratio = them.score / me.score;
+            break;
+        case "points":
+            if (lowerIsBetter(game)) {
+                if (me.score <= 0) return 1;
+                ratio = them.score / me.score;
+            } else {
+                if (them.score <= 0) return 1;
+                ratio = me.score / them.score;
+            }
+            break;
+    }
+    return Math.min(1, ratio - 1);
+}
+
+/**
+ * Splits the pot for one game on one day. Everyone who finished starts with 1 share
+ * and earns up to 1 more for each player they beat; fails get none.
+ * Empty when fewer than two played or nobody finished.
+ */
+export function dayPoints(game: Pick<Game, "type" | "higherWins">, dayResults: Result[]): Map<string, number> {
+    const points = new Map<string, number>();
+    if (dayResults.length < 2) return points;
+    const shares = dayResults.map((me) =>
+        me.fail ? 0 : 1 + dayResults.reduce((sum, them) => sum + (them === me ? 0 : headToHead(game, me, them)), 0),
+    );
+    const total = shares.reduce((sum, s) => sum + s, 0);
+    if (total === 0) return points;
+    dayResults.forEach((r, i) => points.set(r.player, (POT * shares[i]) / total));
+    return points;
+}
+
 /** Formats an average score for display in the standings. */
 export function formatAverage(game: Game, avg: number): string {
     switch (game.type) {

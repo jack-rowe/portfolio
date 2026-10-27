@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Game, Player, Result } from "~firebase/types";
 import { formatAverage } from "../_lib/scoring";
-import { standings, type Period } from "../_lib/stats";
+import { formatPoints, standings, type Period } from "../_lib/stats";
 import { PlayerIcon } from "./PlayerIconButton";
 
 const ALL = "all";
@@ -75,6 +75,8 @@ export function StandingsTab({ players, games, results, today }: Props) {
                         <TableRow>
                             <TableHead className="w-8 text-right">#</TableHead>
                             <TableHead>Player</TableHead>
+                            <TableHead className="text-right">Pts</TableHead>
+                            <TableHead className="text-right">Pts/game</TableHead>
                             <TableHead className="text-right">Wins</TableHead>
                             <TableHead className="text-right">Played</TableHead>
                             {game && (
@@ -94,7 +96,11 @@ export function StandingsTab({ players, games, results, today }: Props) {
                                         <span className="truncate">{row.player.name}</span>
                                     </span>
                                 </TableCell>
-                                <TableCell className="text-right font-clash text-base font-bold">{row.wins}</TableCell>
+                                <TableCell className="text-right font-clash text-base font-bold">
+                                    {formatPoints(row.points)}
+                                </TableCell>
+                                <TableCell className="text-right">{formatPoints(row.ppg)}</TableCell>
+                                <TableCell className="text-right">{row.wins}</TableCell>
                                 <TableCell className="text-right">{row.played}</TableCell>
                                 {game && (
                                     <TableCell className="text-right">
