@@ -220,8 +220,6 @@ export function weeklyStandings(players: Player[], weeks: WeekResult[]): WeeklyR
     return rows.map((row) => ({ ...row, rank: rows.findIndex((o) => o.wins === row.wins) + 1 }));
 }
 
-export type Period = "7" | "30" | "all";
-
 export type StandingRow = {
     player: Player;
     rank: number;
@@ -237,11 +235,6 @@ export type StandingRow = {
     /** Consecutive days played, ending today or yesterday. */
     streak: number;
 };
-
-export function periodStart(period: Period, today: string): string | null {
-    if (period === "all") return null;
-    return addDays(today, -(Number(period) - 1));
-}
 
 function mean(values: number[]): number {
     return values.reduce((sum, v) => sum + v, 0) / values.length;
@@ -276,34 +269,35 @@ type StandingsInput = {
     results: Result[];
     /** null = all games */
     gameSlug: string | null;
-    period: Period;
+    /** The Sunday that starts the week to rank. */
+    week: string;
     today: string;
 };
 
-/** Players who played in the period, most points first. */
-export function standings({ players, games, results, gameSlug, period, today }: StandingsInput): StandingRow[] {
+/** Players who played in the week, most points first. */
+export function standings({ players, games, results, gameSlug, week, today }: StandingsInput): StandingRow[] {
     const game = gameSlug ? games.find((g) => g.slug === gameSlug) : undefined;
     if (gameSlug && !game) return [];
     const scoped = liveResults(game ? [game] : games, results).filter((r) => r.date <= today);
-    const start = periodStart(period, today);
-    const inPeriod = start ? scoped.filter((r) => r.date >= start) : scoped;
+    const end = addDays(week, 6);
+    const inWeek = scoped.filter((r) => r.date >= week && r.date <= end);
 
     const wins = new Map<string, number>();
     const points = new Map<string, number>();
     // The per-game view uses that game's own pot; across all games, each day is worth the same.
-    for (const [date, dayResults] of groupBy(inPeriod, (r) => r.date)) {
+    for (const [date, dayResults] of groupBy(inWeek, (r) => r.date)) {
         for (const card of dayCards(game ? [game] : games, dayResults, date)) {
             for (const p of card.winners) wins.set(p, (wins.get(p) ?? 0) + 1);
             for (const [p, n] of card.points) points.set(p, (points.get(p) ?? 0) + n);
         }
     }
 
-    const periodByPlayer = groupBy(inPeriod, (r) => r.player);
-    // Streaks look at all loaded history, not just the period, so a 40-day streak still reads 40.
+    const weekByPlayer = groupBy(inWeek, (r) => r.player);
+    // Streaks look at all loaded history, not just the week, so a 40-day streak still reads 40.
     const allByPlayer = groupBy(scoped, (r) => r.player);
 
     const rows = players.flatMap((player): Omit<StandingRow, "rank">[] => {
-        const mine = periodByPlayer.get(player.slug);
+        const mine = weekByPlayer.get(player.slug);
         if (!mine) return [];
         const total = points.get(player.slug) ?? 0;
         return [

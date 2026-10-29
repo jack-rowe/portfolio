@@ -110,7 +110,7 @@ describe("day pot", () => {
 
     test("the all-games standings use the day pot, the per-game view doesn't", () => {
         const results = [r(wordle, sam, TODAY, 2), r(wordle, alex, TODAY, 4)];
-        const input = { players, games: [wordle, strands], results, period: "all" as const, today: TODAY };
+        const input = { players, games: [wordle, strands], results, week: weekOf(TODAY), today: TODAY };
         const all = standings({ ...input, gameSlug: null });
         const one = standings({ ...input, gameSlug: "wordle" });
         expect(all.reduce((sum, x) => sum + x.points, 0)).toBeCloseTo(20);
@@ -130,21 +130,27 @@ describe("standings", () => {
         r(wordle, alex, addDays(TODAY, -40), 6),
     ];
 
-    test("points, wins, played, average, losses over the period", () => {
-        const rows = standings({ players, games: [wordle], results, gameSlug: "wordle", period: "7", today: TODAY });
+    test("points, wins, played, average, losses over the week", () => {
+        // TODAY is a Sunday, so the two days before it belong to the previous week.
+        const week = weekOf(addDays(TODAY, -1));
+        const rows = standings({ players, games: [wordle], results, gameSlug: "wordle", week, today: TODAY });
         expect(rows.map((x) => x.player.slug)).toEqual(["sam", "alex"]);
-        // Sam: 3 vs 4 (5.71), 5 vs 2 (3.33), 4 vs X (10). Every day's pot is 10.
-        expect(rows[0].points).toBeCloseTo(19.05, 2);
-        expect(rows[1].points).toBeCloseTo(10.95, 2);
-        expect(rows[0].ppg).toBeCloseTo(6.35, 2);
-        expect(rows[0]).toMatchObject({ rank: 1, wins: 2, played: 3, losses: 0, average: 4 });
-        expect(rows[1]).toMatchObject({ rank: 2, wins: 1, played: 3, losses: 1 });
+        // Sam: 5 vs 2 (3.33), 4 vs X (10). Every day's pot is 10.
+        expect(rows[0].points).toBeCloseTo(13.33, 2);
+        expect(rows[1].points).toBeCloseTo(6.67, 2);
+        expect(rows[0].ppg).toBeCloseTo(6.67, 2);
+        expect(rows[0]).toMatchObject({ rank: 1, wins: 1, played: 2, losses: 0, average: 4.5 });
+        expect(rows[1]).toMatchObject({ rank: 2, wins: 1, played: 2, losses: 1 });
     });
 
-    test("all time includes older days; removed games drop out", () => {
-        const all = standings({ players, games: [wordle], results, gameSlug: null, period: "all", today: TODAY });
-        expect(all[0]).toMatchObject({ wins: 3, played: 4, average: null });
-        expect(standings({ players, games: [], results, gameSlug: null, period: "all", today: TODAY })).toEqual([]);
+    test("only the chosen week counts; removed games drop out", () => {
+        const week = weekOf(TODAY);
+        const now = standings({ players, games: [wordle], results, gameSlug: null, week, today: TODAY });
+        expect(now.map((x) => x.player.slug)).toEqual(["sam", "alex"]);
+        expect(now[0]).toMatchObject({ wins: 1, played: 1, average: null });
+        const old = standings({ players, games: [wordle], results, gameSlug: null, week: weekOf(addDays(TODAY, -40)), today: TODAY });
+        expect(old[0]).toMatchObject({ wins: 1, played: 1 });
+        expect(standings({ players, games: [], results, gameSlug: null, week, today: TODAY })).toEqual([]);
     });
 
     test("streak counts back from today or yesterday", () => {

@@ -68,3 +68,10 @@ export function formatMonth(month: string): string {
 export function weekOf(key: string): string {
     return addDays(key, -parseDateKey(key).getDay());
 }
+
+/** "Oct 25 – 31", or "Sep 28 – Oct 4" when the week spans two months. */
+export function formatWeek(week: string): string {
+    const end = addDays(week, 6);
+    const endLabel = monthOf(end) === monthOf(week) ? String(parseDateKey(end).getDate()) : formatShortDay(end);
+    return `${formatShortDay(week)} – ${endLabel}`;
+}
