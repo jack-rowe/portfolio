@@ -1,5 +1,5 @@
 import type { Game, Player, Result } from "~firebase/types";
-import { addDays } from "./dates";
+import { addDays, weekOf } from "./dates";
 import { compareResults, dayPoints, formatNumber, lowerIsBetter } from "./scoring";
 
 /** Only results whose game is still on the board. Removed games keep their data but drop off. */
@@ -50,13 +50,18 @@ export type DayCard = {
     points: Map<string, number>;
 };
 
-/** One card per game played on `date`, in game creation order. */
+/**
+ * One card per game played on `date`, in game creation order.
+ *
+ * Every day hands out the same total, a pot per game on the board, so a day when only
+ * some games were played isn't worth less. The games that paid out split all of it.
+ */
 export function dayCards(games: Game[], results: Result[], date: string): DayCard[] {
     const byGame = groupBy(
         results.filter((r) => r.date === date),
         (r) => r.game,
     );
-    return games.flatMap((game) => {
+    const cards = games.flatMap((game) => {
         const dayResults = byGame.get(game.slug);
         if (!dayResults) return [];
         return [
@@ -68,6 +73,13 @@ export function dayCards(games: Game[], results: Result[], date: string): DayCar
             },
         ];
     });
+    const paid = cards.filter((c) => c.points.size > 0).length;
+    if (paid === 0 || paid === games.length) return cards;
+    const scale = games.length / paid;
+    return cards.map((card) => ({
+        ...card,
+        points: new Map([...card.points].map(([player, n]) => [player, n * scale])),
+    }));
 }
 
 function joinNames(names: string[]): string {
@@ -135,6 +147,77 @@ export function leadersByDay(games: Game[], results: Result[]): Map<string, DayT
         byDay.set(date, dayLeaders(dayTotals(dayCards(games, dayResults, date))));
     }
     return byDay;
+}
+
+export type WeekResult = {
+    /** The Sunday the week starts on. */
+    week: string;
+    /** Points added up across every day of the week. */
+    totals: DayTotal[];
+    /** Most points over the week; ties share the win. Empty when nobody scored. */
+    winners: DayTotal[];
+};
+
+/** Every finished week (Sunday to Saturday, before today's week) that has results, oldest first. */
+export function finishedWeeks(games: Game[], results: Result[], today: string): WeekResult[] {
+    const current = weekOf(today);
+    const byWeek = groupBy(
+        results.filter((r) => weekOf(r.date) < current),
+        (r) => weekOf(r.date),
+    );
+    return [...byWeek]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([week, weekResults]) => {
+            const cards = [...groupBy(weekResults, (r) => r.date)].flatMap(([date, dayResults]) =>
+                dayCards(games, dayResults, date),
+            );
+            const totals = dayTotals(cards);
+            return { week, totals, winners: dayLeaders(totals) };
+        });
+}
+
+/** Player slugs who won the week before today's. */
+export function lastWeekWinners(weeks: WeekResult[], today: string): string[] {
+    const last = addDays(weekOf(today), -7);
+    return weeks.find((w) => w.week === last)?.winners.map((t) => t.player) ?? [];
+}
+
+/** Who wears the crown on `day`: that week's winners once it's over, otherwise last week's. */
+export function crownedOn(weeks: WeekResult[], day: string, today: string): string[] {
+    const week = weeks.find((w) => w.week === weekOf(day));
+    return week ? week.winners.map((t) => t.player) : lastWeekWinners(weeks, today);
+}
+
+export type WeeklyRow = {
+    player: Player;
+    rank: number;
+    /** Weeks won, shared wins included. */
+    wins: number;
+    /** Weeks with at least one result. */
+    played: number;
+    /** Most points in a single week. */
+    best: number;
+};
+
+/** Players who played in any finished week, most weekly wins first. Equal wins share a rank. */
+export function weeklyStandings(players: Player[], weeks: WeekResult[]): WeeklyRow[] {
+    const rows = players.flatMap((player): Omit<WeeklyRow, "rank">[] => {
+        const mine = weeks.flatMap((w) => w.totals.filter((t) => t.player === player.slug));
+        if (mine.length === 0) return [];
+        return [
+            {
+                player,
+                wins: weeks.filter((w) => w.winners.some((t) => t.player === player.slug)).length,
+                played: mine.length,
+                best: Math.max(...mine.map((t) => t.points)),
+            },
+        ];
+    });
+    rows.sort(
+        (a, b) =>
+            b.wins - a.wins || roundPoints(b.best) - roundPoints(a.best) || a.player.name.localeCompare(b.player.name),
+    );
+    return rows.map((row) => ({ ...row, rank: rows.findIndex((o) => o.wins === row.wins) + 1 }));
 }
 
 export type Period = "7" | "30" | "all";
@@ -205,14 +288,14 @@ export function standings({ players, games, results, gameSlug, period, today }: 
     const start = periodStart(period, today);
     const inPeriod = start ? scoped.filter((r) => r.date >= start) : scoped;
 
-    const gamesBySlug = new Map(games.map((g) => [g.slug, g]));
     const wins = new Map<string, number>();
     const points = new Map<string, number>();
-    for (const dayResults of groupBy(inPeriod, (r) => `${r.game}|${r.date}`).values()) {
-        const dayGame = gamesBySlug.get(dayResults[0].game);
-        if (!dayGame) continue;
-        for (const p of winnersOf(dayGame, dayResults)) wins.set(p, (wins.get(p) ?? 0) + 1);
-        for (const [p, n] of dayPoints(dayGame, dayResults)) points.set(p, (points.get(p) ?? 0) + n);
+    // The per-game view uses that game's own pot; across all games, each day is worth the same.
+    for (const [date, dayResults] of groupBy(inPeriod, (r) => r.date)) {
+        for (const card of dayCards(game ? [game] : games, dayResults, date)) {
+            for (const p of card.winners) wins.set(p, (wins.get(p) ?? 0) + 1);
+            for (const [p, n] of card.points) points.set(p, (points.get(p) ?? 0) + n);
+        }
     }
 
     const periodByPlayer = groupBy(inPeriod, (r) => r.player);

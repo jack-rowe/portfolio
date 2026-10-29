@@ -63,3 +63,8 @@ export function monthGrid(month: string): (string | null)[] {
 export function formatMonth(month: string): string {
     return parseDateKey(`${month}-01`).toLocaleDateString(undefined, { month: "long", year: "numeric" });
 }
+
+/** The Sunday that starts `key`'s week, matching the calendar's Sunday-first rows. */
+export function weekOf(key: string): string {
+    return addDays(key, -parseDateKey(key).getDay());
+}

@@ -1,16 +1,20 @@
 import { describe, expect, test } from "vitest";
 
 import type { Game, Player, Result } from "~firebase/types";
-import { addDays, addMonths, monthGrid } from "./dates";
+import { addDays, addMonths, monthGrid, weekOf } from "./dates";
 import {
     currentStreak,
     dayCards,
     dayTotals,
+    finishedWeeks,
+    crownedOn,
+    lastWeekWinners,
     leaderLine,
     leadersByDay,
     pickBoardDay,
     standings,
     trendSeries,
+    weeklyStandings,
 } from "./stats";
 
 const TODAY = "2026-10-25";
@@ -82,6 +86,35 @@ describe("today board", () => {
             TODAY,
         );
         expect(leaderLine(cards, names)).toBe("Sam and Alex are tied with 10 pts each");
+    });
+});
+
+describe("day pot", () => {
+    test("a day with some games unplayed is worth the same as a full day", () => {
+        const full = dayTotals(
+            dayCards(
+                [wordle, strands],
+                [r(wordle, sam, TODAY, 2), r(wordle, alex, TODAY, 4), r(strands, sam, TODAY, 1), r(strands, alex, TODAY, 5)],
+                TODAY,
+            ),
+        );
+        // Strands only had one player, so Wordle pays out the whole day.
+        const partial = dayTotals(
+            dayCards([wordle, strands], [r(wordle, sam, TODAY, 2), r(wordle, alex, TODAY, 4), r(strands, jo, TODAY, 5)], TODAY),
+        );
+        const total = (rows: typeof full) => rows.reduce((sum, t) => sum + t.points, 0);
+        expect(total(full)).toBeCloseTo(20);
+        expect(total(partial)).toBeCloseTo(20);
+        expect(partial.find((t) => t.player === "jo")?.points).toBe(0);
+    });
+
+    test("the all-games standings use the day pot, the per-game view doesn't", () => {
+        const results = [r(wordle, sam, TODAY, 2), r(wordle, alex, TODAY, 4)];
+        const input = { players, games: [wordle, strands], results, period: "all" as const, today: TODAY };
+        const all = standings({ ...input, gameSlug: null });
+        const one = standings({ ...input, gameSlug: "wordle" });
+        expect(all.reduce((sum, x) => sum + x.points, 0)).toBeCloseTo(20);
+        expect(one.reduce((sum, x) => sum + x.points, 0)).toBeCloseTo(10);
     });
 });
 
@@ -169,5 +202,50 @@ describe("calendar", () => {
         expect(grid.at(-1)).toBe("2026-10-31");
         expect(addMonths("2026-01", -1)).toBe("2025-12");
         expect(addMonths("2026-12", 1)).toBe("2027-01");
+    });
+});
+
+describe("weeks", () => {
+    // TODAY (Oct 25, 2026) is a Sunday, so the last finished week is Oct 18 to 24.
+    const lastWeek = "2026-10-18";
+    const before = "2026-10-11";
+
+    test("weeks start on Sunday", () => {
+        expect(weekOf(TODAY)).toBe(TODAY);
+        expect(weekOf("2026-10-24")).toBe(lastWeek);
+        expect(weekOf("2026-10-01")).toBe("2026-09-27");
+    });
+
+    test("winner has the most points over the week; the current week doesn't count yet", () => {
+        const results = [
+            // Last week: Sam wins Monday, Alex wins Tuesday and Wednesday.
+            r(wordle, sam, "2026-10-19", 2),
+            r(wordle, alex, "2026-10-19", 4),
+            r(wordle, sam, "2026-10-20", 5),
+            r(wordle, alex, "2026-10-20", 3),
+            r(wordle, sam, "2026-10-21", 5),
+            r(wordle, alex, "2026-10-21", 3),
+            // The week before: tied.
+            r(wordle, sam, "2026-10-12", 3),
+            r(wordle, alex, "2026-10-12", 3),
+            // This week is still going.
+            r(wordle, jo, TODAY, 1),
+            r(wordle, sam, TODAY, 6),
+        ];
+        const weeks = finishedWeeks([wordle], results, TODAY);
+        expect(weeks.map((w) => w.week)).toEqual([before, lastWeek]);
+        expect(weeks[1].winners.map((t) => t.player)).toEqual(["alex"]);
+        expect(weeks[0].winners.map((t) => t.player).sort()).toEqual(["alex", "sam"]);
+        expect(lastWeekWinners(weeks, TODAY)).toEqual(["alex"]);
+        expect(lastWeekWinners(weeks, addDays(TODAY, 7))).toEqual([]);
+        // A day in a finished week crowns that week's winners; this week still shows last week's.
+        expect(crownedOn(weeks, "2026-10-13", TODAY).sort()).toEqual(["alex", "sam"]);
+        expect(crownedOn(weeks, TODAY, TODAY)).toEqual(["alex"]);
+
+        const rows = weeklyStandings(players, weeks);
+        expect(rows.map((x) => [x.player.slug, x.rank, x.wins, x.played])).toEqual([
+            ["alex", 1, 2, 2],
+            ["sam", 2, 1, 2],
+        ]);
     });
 });

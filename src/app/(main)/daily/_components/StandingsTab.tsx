@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Game, Player, Result } from "~firebase/types";
 import { formatAverage } from "../_lib/scoring";
-import { formatPoints, standings, type Period } from "../_lib/stats";
+import { formatPoints, standings, weeklyStandings, type Period, type WeekResult } from "../_lib/stats";
 import { PlayerIcon } from "./PlayerIconButton";
 
 const ALL = "all";
@@ -21,9 +21,10 @@ type Props = {
     games: Game[];
     results: Result[];
     today: string;
+    weeks: WeekResult[];
 };
 
-export function StandingsTab({ players, games, results, today }: Props) {
+export function StandingsTab({ players, games, results, today, weeks }: Props) {
     const [gameSlug, setGameSlug] = useState<string>(ALL);
     const [period, setPeriod] = useState<Period>("30");
 
@@ -92,7 +93,7 @@ export function StandingsTab({ players, games, results, today }: Props) {
                                 <TableCell className="text-right text-muted-foreground">{row.rank}</TableCell>
                                 <TableCell>
                                     <span className="flex items-center gap-2 font-medium">
-                                        <PlayerIcon player={row.player} />
+                                        <PlayerIcon player={row.player} badge="champion" />
                                         <span className="truncate">{row.player.name}</span>
                                     </span>
                                 </TableCell>
@@ -114,6 +115,55 @@ export function StandingsTab({ players, games, results, today }: Props) {
                     </TableBody>
                 </Table>
             )}
+
+            <WeeklyTable players={players} weeks={weeks} />
         </div>
+    );
+}
+
+/** Weekly wins across all games and every finished week, so the filters above don't apply. */
+function WeeklyTable({ players, weeks }: { players: Player[]; weeks: WeekResult[] }) {
+    const rows = weeklyStandings(players, weeks);
+
+    return (
+        <section className="flex flex-col gap-2 pt-4">
+            <div>
+                <h3 className="font-clash text-lg font-bold leading-tight">Weekly wins</h3>
+                <p className="text-sm text-muted-foreground">
+                    Most points from Sunday to Saturday, all games. Last week&apos;s winner wears the crown.
+                </p>
+            </div>
+            {rows.length === 0 ? (
+                <p className="py-8 text-center text-muted-foreground">No finished weeks yet.</p>
+            ) : (
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-8 text-right">#</TableHead>
+                            <TableHead>Player</TableHead>
+                            <TableHead className="text-right">Wins</TableHead>
+                            <TableHead className="text-right">Weeks</TableHead>
+                            <TableHead className="text-right">Best week</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody className="tabular-nums">
+                        {rows.map((row) => (
+                            <TableRow key={row.player.slug}>
+                                <TableCell className="text-right text-muted-foreground">{row.rank}</TableCell>
+                                <TableCell>
+                                    <span className="flex items-center gap-2 font-medium">
+                                        <PlayerIcon player={row.player} badge="champion" />
+                                        <span className="truncate">{row.player.name}</span>
+                                    </span>
+                                </TableCell>
+                                <TableCell className="text-right font-clash text-base font-bold">{row.wins}</TableCell>
+                                <TableCell className="text-right">{row.played}</TableCell>
+                                <TableCell className="text-right">{formatPoints(row.best)}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            )}
+        </section>
     );
 }

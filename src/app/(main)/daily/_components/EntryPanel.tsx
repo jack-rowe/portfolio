@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import { Plus, Trash2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { addPlayer, deleteResult, describeError, removeGame, renamePlayer, saveResult } from "~firebase/scores";
 import type { Game, Player, Result } from "~firebase/types";
-import { formatDay, isDateKey } from "../_lib/dates";
+import { addDays, formatDay, isDateKey } from "../_lib/dates";
 import { blankEntry, checkEntry, describeGame, entryFromResult, type Entry } from "../_lib/scoring";
 import { Container } from "./Container";
 import { GameIconButton } from "./GameIconButton";
@@ -98,17 +98,32 @@ export function EntryPanel({ players, games, results, today }: Props) {
     const player = players.find((p) => p.slug === playerSlug) ?? null;
     const openGame = games.find((g) => g.slug === openSlug) ?? null;
 
-    const logged = new Map<string, Result>();
-    if (player) {
+    /** The picked player's results on one day, by game. */
+    const loggedOn = (day: string) => {
+        const map = new Map<string, Result>();
+        if (!player) return map;
         for (const r of results) {
-            if (r.player === player.slug && r.date === date) logged.set(r.game, r);
+            if (r.player === player.slug && r.date === day) map.set(r.game, r);
         }
-    }
+        return map;
+    };
+    const logged = loggedOn(date);
     const existing = openGame ? logged.get(openGame.slug) : undefined;
 
     const dateError = !isDateKey(date) ? "Pick a date." : date > today ? "Pick today or an earlier day." : null;
     const check = openGame ? checkEntry(openGame, entry) : null;
     const canSave = Boolean(player && openGame && check?.ok && !dateError && !busy);
+
+    const pickDate = (day: string) => {
+        setDate(day);
+        setStatus(null);
+        setArmedDelete(null);
+        // Show that day's score in an open panel, or a blank one if there isn't one.
+        if (openGame) {
+            const prior = isDateKey(day) ? loggedOn(day).get(openGame.slug) : undefined;
+            setEntry(prior ? entryFromResult(openGame, prior) : blankEntry(openGame));
+        }
+    };
 
     const pickPlayer = (slug: string) => {
         setPlayerSlug(slug);
@@ -264,6 +279,72 @@ export function EntryPanel({ players, games, results, today }: Props) {
             >
                 {status?.text}
             </p>
+
+            <section className="flex flex-col gap-3">
+                <SectionHeading
+                    action={
+                        date !== today && (
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                    pickDate(today);
+                                }}
+                            >
+                                Back to today
+                            </Button>
+                        )
+                    }
+                >
+                    Day
+                </SectionHeading>
+                <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        aria-label="Previous day"
+                        disabled={!isDateKey(date)}
+                        onClick={() => {
+                            pickDate(addDays(date, -1));
+                        }}
+                    >
+                        <ChevronLeft aria-hidden />
+                    </Button>
+                    <Input
+                        id={`${id}-date`}
+                        type="date"
+                        aria-label="Day"
+                        max={today}
+                        className="w-44"
+                        value={date}
+                        onChange={(e) => {
+                            pickDate(e.target.value);
+                        }}
+                    />
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        aria-label="Next day"
+                        disabled={!isDateKey(date) || date >= today}
+                        onClick={() => {
+                            pickDate(addDays(date, 1));
+                        }}
+                    >
+                        <ChevronRight aria-hidden />
+                    </Button>
+                    <span
+                        className={cn(
+                            "text-sm",
+                            date === today ? "text-muted-foreground" : "font-medium text-primary",
+                        )}
+                    >
+                        {dateError ?? (date === today ? "Today" : formatDay(date))}
+                    </span>
+                </div>
+            </section>
 
             <section className="flex flex-col gap-3">
                 <SectionHeading
@@ -469,6 +550,9 @@ export function EntryPanel({ players, games, results, today }: Props) {
                             <h3 className="font-clash text-xl font-bold leading-tight truncate">
                                 {openGame.name} · {player.name}
                             </h3>
+                            {date !== today && isDateKey(date) && (
+                                <p className="text-sm font-medium text-primary">For {formatDay(date)}</p>
+                            )}
                             {existing && (
                                 <p className="text-sm text-muted-foreground">
                                     Already logged {existing.shown}. Saving replaces it.
@@ -488,20 +572,6 @@ export function EntryPanel({ players, games, results, today }: Props) {
                     </div>
 
                     <ScoreInput game={openGame} entry={entry} onChange={setEntry} />
-
-                    <div className="flex flex-col gap-1.5">
-                        <Label htmlFor={`${id}-date`}>Date</Label>
-                        <Input
-                            id={`${id}-date`}
-                            type="date"
-                            max={today}
-                            className="w-44"
-                            value={date}
-                            onChange={(e) => {
-                                setDate(e.target.value);
-                            }}
-                        />
-                    </div>
 
                     {(entryError ?? dateError ?? (check && !check.ok && check.error)) && (
                         <p role="alert" className="text-sm text-destructive">

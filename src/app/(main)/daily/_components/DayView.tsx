@@ -45,7 +45,7 @@ export function DayView({ players, games, results, day, note }: Props) {
                                     <span className="w-4 text-right text-sm tabular-nums text-muted-foreground">
                                         {t.rank}
                                     </span>
-                                    <PlayerIcon player={player} />
+                                    <PlayerIcon player={player} badge="champion" />
                                     <span className={cn("min-w-0 flex-1 truncate", leads && "font-semibold")}>
                                         {player.name}
                                     </span>
