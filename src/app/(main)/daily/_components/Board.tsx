@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { DailyData } from "../_hooks/use-daily-data";
 import { finishedWeeks, lastWeekWinners, liveResults } from "../_lib/stats";
 import { CalendarTab } from "./CalendarTab";
+import { HallOfFameTab } from "./HallOfFameTab";
 import { ChampionsContext } from "./champions";
 import { StandingsTab } from "./StandingsTab";
 import { TodayTab } from "./TodayTab";
@@ -35,11 +36,15 @@ export function Board({ players, games, results, loading, error, today }: Props)
     return (
         <ChampionsContext.Provider value={new Set(lastWeekWinners(weeks, today))}>
             <Tabs defaultValue="today" className="flex flex-col gap-4">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-5">
                     <TabsTrigger value="today">Today</TabsTrigger>
                     <TabsTrigger value="standings">Standings</TabsTrigger>
                     <TabsTrigger value="calendar">Calendar</TabsTrigger>
                     <TabsTrigger value="trends">Trends</TabsTrigger>
+                    <TabsTrigger value="fame">
+                        <span className="sm:hidden">Fame</span>
+                        <span className="hidden sm:inline">Hall of Fame</span>
+                    </TabsTrigger>
                 </TabsList>
                 <TabsContent value="today" className="mt-0">
                     <TodayTab {...props} />
@@ -52,6 +57,9 @@ export function Board({ players, games, results, loading, error, today }: Props)
                 </TabsContent>
                 <TabsContent value="trends" className="mt-0">
                     <TrendsTab {...props} />
+                </TabsContent>
+                <TabsContent value="fame" className="mt-0">
+                    <HallOfFameTab {...props} weeks={weeks} />
                 </TabsContent>
             </Tabs>
         </ChampionsContext.Provider>

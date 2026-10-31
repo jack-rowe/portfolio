@@ -8,7 +8,7 @@ export function liveResults(games: Game[], results: Result[]): Result[] {
     return results.filter((r) => slugs.has(r.game));
 }
 
-function groupBy<T>(items: T[], key: (item: T) => string): Map<string, T[]> {
+export function groupBy<T>(items: T[], key: (item: T) => string): Map<string, T[]> {
     const map = new Map<string, T[]>();
     for (const item of items) {
         const k = key(item);
